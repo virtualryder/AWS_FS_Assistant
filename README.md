@@ -1,6 +1,6 @@
 # AWS Financial Services Assistant
 
-**Presidio AWS Financial Services Practice**
+**AWS Financial Services Practice**
 
 A compliance-validated AWS architecture assistant purpose-built for financial services — banks, credit unions, payment processors, insurers, fintechs, and capital markets firms. Powered by two specialized AI agents that validate every recommendation against the full financial services regulatory stack.
 
