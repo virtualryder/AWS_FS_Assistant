@@ -1,142 +1,216 @@
-# AWS Documentation Chat App
+# AWS Financial Services Assistant
 
-An agentic RAG (Retrieval-Augmented Generation) application that lets you ask natural-language architecture questions and receive grounded, cited answers drawn directly from official AWS documentation.
+**Presidio AWS Financial Services Practice**
 
-Built with **Claude Sonnet 4.6** (Anthropic) + **ChromaDB** + **Streamlit**.
-
-![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-red)
-![ChromaDB](https://img.shields.io/badge/ChromaDB-0.5%2B-green)
-![Claude](https://img.shields.io/badge/Claude-Sonnet%204.6-purple)
+A compliance-validated AWS architecture assistant purpose-built for financial services — banks, credit unions, payment processors, insurers, fintechs, and capital markets firms. Powered by two specialized AI agents that validate every recommendation against the full financial services regulatory stack.
 
 ---
 
 ## What It Does
 
-The app acts as an **AWS Solutions Architect on demand**. You describe your customer's environment (or paste an architecture doc), ask a question, and the agent:
+The assistant fields architecture and GenAI/ML questions from your account team and automatically:
 
-1. **Searches** a locally indexed vector knowledge base of AWS documentation
-2. **Fetches live AWS docs pages** when the KB is sparse or content may be stale
-3. **Synthesizes** a structured 11-section architecture response grounded entirely in retrieved documentation
-4. **Labels every claim** — `✅ Documented Fact`, `💡 Design Recommendation`, `🔄 Alternative Option`, or `⚠️ Assumption` — so you always know what's confirmed vs. inferred
-5. **Cites every source** inline with retrieval dates and flags content freshness
+1. **Identifies applicable regulations** based on the customer's entity type (bank, payment processor, insurer, etc.)
+2. **Runs two specialized AI agents** against every question:
+   - 🏗️ **AWS Architect Agent** — designs scalable, secure architectures with full compliance mapping
+   - 🤖 **GenAI/ML Expert Agent** — identifies Bedrock/AgentCore/SageMaker opportunities with AI governance frameworks
+3. **Synthesizes a unified response** covering architecture, compliance, and AI — every time
+4. **Generates financial services discovery briefs** with regulatory risk profiling and 20 targeted discovery questions
+
+---
+
+## Regulations Applied to Every Recommendation
+
+| Regulation | Current Version | Key Scope |
+|------------|----------------|-----------|
+| **GLBA / FTC Safeguards Rule** | June 2023 amendments; breach notification effective May 2024 | All financial institutions handling NPI. AES-256 encryption, MFA for all users, annual pen testing, 30-day FTC breach notification |
+| **PCI DSS** | v4.0.1 (all requirements mandatory since March 31, 2025) | Anyone storing/processing/transmitting cardholder data. MFA for ALL CDE access, field-level PAN encryption, automated SIEM |
+| **SOX Section 404** | PCAOB AS 2201 (amended version effective Dec 15, 2026); AS 1105 effective Dec 2024 | Public companies. ITGCs (access mgmt, change mgmt, computer ops, SDLC) and ITACs for financial reporting systems |
+| **FFIEC IT Handbook** | AIO (Jun 2021), DA&M (Aug 2024), InfoSec (Sep 2016) | Banks and credit unions. Cloud shared responsibility, AI/ML governance, API security, SSDLC |
+| **Interagency MRM Guidance** | April 17, 2026 (supersedes SR 11-7 / OCC 2011-12) | Traditional ML models in scope; Gen AI explicitly excluded pending RFI. Tiered by materiality |
+| **NIST AI RMF** | 1.0 + AI 600-1 GenAI Profile (Jul 2024); Agentic AI Profile (draft 2025) | Voluntary but cited by regulators. GOVERN/MAP/MEASURE/MANAGE. 12 GenAI risk categories |
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    Streamlit Frontend                    │
-│  Sidebar: topic selector · doc upload · customer context │
-│  Main: chat interface · live research status feed        │
-└────────────────────┬─────────────────────────────────────┘
-                     │
-                     ▼
-┌──────────────────────────────────────────────────────────┐
-│               Claude Sonnet 4.6 Agent Loop               │
-│  System prompt enforces: research-first, grounded only   │
-│  Tools: search_aws_knowledge_base · fetch_aws_page       │
-└──────────┬──────────────────────────┬────────────────────┘
-           │                          │
-           ▼                          ▼
-┌─────────────────────┐   ┌──────────────────────────────┐
-│  ChromaDB (local)   │   │  Live AWS Documentation      │
-│  SentenceTransformer│   │  docs.aws.amazon.com         │
-│  all-MiniLM-L6-v2   │   │  aws.amazon.com/solutions    │
-│  Cosine similarity  │   │  aws.amazon.com/architecture │
-└─────────────────────┘   └──────────────────────────────┘
-           ▲
-           │  Index pipeline
-┌──────────┴───────────────────────────────────────────────┐
-│  Ingestion Pipeline                                      │
-│  BFS crawler → HTML→Markdown → chunker → embedder       │
-│  30+ AWS services · 3 source tiers · manifest tracking  │
-└──────────────────────────────────────────────────────────┘
-```
-
-### Module layout
-
-```
-aws-documentation-chat-app/
-├── app.py                    # Streamlit UI entry point
-├── config.py                 # Paths, model, chunking, retrieval settings
-├── requirements.txt
-├── .env.example              # Copy to .env and add your Anthropic key
-│
-├── agent/
-│   ├── chat_agent.py         # Agentic loop (streaming Claude API calls)
-│   ├── tools.py              # Tool schemas passed to Claude
-│   └── tool_executor.py      # Python implementations of each tool
-│
-├── scraper/
-│   ├── aws_scraper.py        # BFS crawler: HTML fetch → clean markdown
-│   └── aws_doc_urls.py       # 34 seed URLs, crawl boundaries, topic keyword map
-│
-├── ingestion/
-│   ├── ingest_pipeline.py    # Orchestrates crawl → chunk → embed → upsert
-│   ├── chunker.py            # Overlapping character-window chunking
-│   └── document_parser.py   # PDF / DOCX / TXT text extraction (customer uploads)
-│
-└── vectorstore/
-    └── chroma_client.py      # ChromaDB singleton + semantic query interface
++------------------------------------------------------------------+
+|                     Streamlit Frontend                           |
+|  Sidebar: KB metrics . compliance reference . customer mgmt      |
+|  Main: customer profile . discovery brief . chat interface       |
++----------------------------+-------------------------------------+
+                             |
+                             | user question + customer context
+                             v
++------------------------------------------------------------------+
+|              FinServChatAgent (Orchestrator)                     |
+|  Routes: full analysis vs. quick answer                          |
+|  Runs: Phase 1 (Architect) -> Phase 2 (GenAI) -> Synthesis       |
++---------------+---------------------------+----------------------+
+                |                           |
+                v                           v
++--------------------------+  +------------------------------+
+|  AWSArchitectAgent       |  |  GenAIMLAgent                |
+|  (Phase 1)               |  |  (Phase 2)                   |
+|                          |  |                              |
+| . Architecture design    |  | . Bedrock/AgentCore/SageMaker|
+| . GLBA compliance map    |  | . NIST AI RMF governance     |
+| . PCI DSS v4.0.1         |  | . MRM Guidance alignment     |
+| . SOX ITGC coverage      |  | . Fair lending (ECOA)        |
+| . FFIEC alignment        |  | . AI workflow diagrams       |
+| . Whiteboard diagram     |  | . Model inventory templates  |
+| . CIO/CSO/CTO/LoB views  |  | . Human review gates (A2I)   |
++-----------+--------------+  +------------+-----------------+
+            |                              |
+            +---------------+--------------+
+                            |
+                            v
++------------------------------------------------------------------+
+|  Synthesis Pass -- Combined Response                             |
+|  Unified: Architecture + Compliance + GenAI + Governance         |
++-------------------+-------------------------+--------------------+
+                    |                         |
+                    v                         v
++-------------------+          +------------------------------+
+| pgvector KB       |          | Live AWS Documentation       |
+| PostgreSQL        |          | docs.aws.amazon.com          |
+| all-MiniLM-L6-v2  |          | aws.amazon.com/solutions     |
+| HNSW indexing     |          | aws.amazon.com/architecture  |
++-------------------+          +------------------------------+
 ```
 
 ---
 
-## Key Features
+## Every Architecture Response Includes
 
-### Grounding & Anti-Hallucination
-- Agent is **required** to search the knowledge base before drafting any answer
-- All responses labeled with confidence level (`✅ / 💡 / 🔄 / ⚠️`)
-- Explicit uncertainty language when docs don't cover a topic
-- **Freshness check**: for rapidly-evolving services (Bedrock, SageMaker, EKS), the agent re-fetches the live AWS page if the indexed content is older than 14 days
-
-### Source Tier System
-| Tier | Source | Used For |
-|---|---|---|
-| **Tier 1** | AWS product docs, Bedrock docs | What a service does, APIs, limits, exact setup |
-| **Tier 2** | AWS Prescriptive Guidance, Architecture Center | Design patterns, trade-offs, step-by-step guidance |
-| **Tier 3** | AWS Solutions Library | Packaged solutions, repeatable deployment patterns |
-
-If a Tier 1 source contradicts Tier 2/3, the agent says so explicitly.
-
-### 34 Indexed Services (out of the box)
-Lambda, EC2, ECS, EKS, S3, EFS, RDS, DynamoDB, Redshift, ElastiCache, VPC, Route 53, CloudFront, API Gateway, IAM, KMS, Cognito, GuardDuty, Glue, Kinesis, Athena, SQS, SNS, EventBridge, Step Functions, SageMaker, Bedrock, Bedrock AgentCore, CloudFormation, CloudWatch, CloudTrail, AWS Prescriptive Guidance, AWS Solutions Library, AWS Reference Architecture
-
-### Structured 11-Section Architecture Response
-Every architecture question generates:
-1. Customer Situation Summary
-2. Key Assumptions
-3. Recommended Architecture (with ASCII diagram)
-4. Two Alternative Architectures
-5. Why This Architecture Fits
-6. Component Deep-Dive (plain-English + analogies + common mistakes)
-7. Step-by-Step Implementation Guide
-8. Security, Networking & IAM
-9. Cost & Operations
-10. Trade-offs Summary Table
-11. Sources & Freshness Note
-
-### Customer Context
-- Paste a description of the customer's current environment (servers, databases, goals) into the sidebar — it's injected into every message
-- Upload architecture docs, RFPs, or notes (PDF, DOCX, TXT, MD) — text is extracted and added to context automatically
+1. **Situation Summary & Regulatory Context** — Entity type, applicable regulations
+2. **Key Assumptions** — Every inference flagged with warning
+3. **Recommended Architecture** — Whiteboard-ready text diagram
+4. **Why This Architecture Solves the Problem** — "Why" behind every decision
+5. **Compliance Mapping Tables** — GLBA / PCI DSS / SOX / FFIEC row-by-row
+6. **Security Architecture** — Zero Trust, network segmentation, IAM, encryption
+7. **Two Alternative Architectures** — With compliance implications per alternative
+8. **Scalability & Resilience** — HA, DR, RTO/RPO for financial services
+9. **Implementation Guide** — Step-by-step with AWS Console paths and CLI commands
+10. **Stakeholder Perspectives** — CIO / CSO/CISO / CTO / Line of Business
+11. **Component Deep-Dive** — Plain English + compliance notes per service
+12. **GenAI/ML Opportunities** — Bedrock workflows with AI governance
+13. **Discovery Questions** — For unknown gaps
+14. **Sources & Freshness Note** — All citations with retrieval dates
 
 ---
 
-## Getting Started
+## Module Layout
 
-### Prerequisites
-- Python 3.11+
-- An [Anthropic API key](https://console.anthropic.com/settings/keys)
+```
+AWS Financial Services Assistant/
+|-- app.py                          # Streamlit UI entry point
+|-- config.py                       # Settings (model, chunking, retrieval, branding)
+|-- requirements.txt
+|-- railway.toml                    # Railway deployment config
+|-- startup_ingest.py               # Background indexer on first boot
+|-- refresh_ingest.py               # Weekly stale-content refresh
+|
+|-- agent/
+|   |-- chat_agent.py               # FinServChatAgent orchestrator
+|   |-- aws_architect_agent.py      # NEW: AWS architecture + compliance specialist
+|   |-- genai_ml_agent.py           # NEW: GenAI/ML + AI governance specialist
+|   |-- discovery_agent.py          # Financial services discovery brief generator
+|   |-- tools.py                    # Tool schemas for Claude API
+|   `-- tool_executor.py            # Tool implementations (KB search, live fetch, web)
+|
+|-- scraper/
+|   |-- aws_scraper.py              # BFS HTML crawler -> markdown converter
+|   `-- aws_doc_urls.py             # 60+ seed URLs (financial services priority)
+|
+|-- ingestion/
+|   |-- ingest_pipeline.py          # Orchestrate crawl -> chunk -> embed -> upsert
+|   |-- chunker.py                  # Overlapping character-window chunking
+|   `-- document_parser.py         # PDF / DOCX / TXT extraction
+|
+|-- vectorstore/
+|   `-- pg_client.py                # PostgreSQL + pgvector client (HNSW index)
+|
+`-- tests/
+    `-- test_build_validation.py    # 48-test build validation suite
+```
 
-### Installation
+---
+
+## Prerequisites & API Keys
+
+You need **three** credentials. Set them as environment variables (`.env` locally, Railway Variables in production).
+
+| Variable | Required | Where to Get It | Purpose |
+|----------|----------|----------------|---------|
+| `ANTHROPIC_API_KEY` | YES | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Powers all three Claude agents |
+| `DATABASE_URL` | YES | Railway PostgreSQL plugin (auto-injected) or your own PostgreSQL with pgvector | Vector KB + customer workspaces + conversations |
+| `TAVILY_API_KEY` | YES (Discovery Briefs) | [app.tavily.com](https://app.tavily.com) | Web search for discovery brief company research |
+
+### Getting Your API Keys
+
+**Anthropic API Key:**
+1. Go to [console.anthropic.com](https://console.anthropic.com)
+2. Settings -> API Keys -> Create Key
+3. Copy the `sk-ant-...` key
+
+**Tavily API Key:**
+1. Go to [app.tavily.com](https://app.tavily.com)
+2. Sign up (free tier: 1,000 searches/month)
+3. Copy your API key from the dashboard
+
+**Database:** See Database Setup section below.
+
+---
+
+## Local Development
+
+### 1. Install Python
+
+Python 3.11+ required. Download from [python.org](https://python.org).
+
+### 2. Install PostgreSQL + pgvector
+
+**Windows:**
+1. Download PostgreSQL installer from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/)
+2. Run installer — note your password and port (default: 5432)
+3. For pgvector: download the Windows binary from [pgvector releases](https://github.com/pgvector/pgvector/releases) and follow the Windows install instructions
+
+**macOS (Homebrew):**
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+# pgvector via extension:
+psql postgres -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt install postgresql postgresql-contrib
+sudo apt install postgresql-16-pgvector   # match your PostgreSQL version
+```
+
+### 3. Create the database
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/AWS-Documentation-Chat-App.git
-cd AWS-Documentation-Chat-App
+psql -U postgres
+```
+
+```sql
+CREATE DATABASE aws_finserv;
+\c aws_finserv
+CREATE EXTENSION IF NOT EXISTS vector;
+\q
+```
+
+### 4. Set up the Python environment
+
+```bash
+cd "AWS Financial Services Assistant"
 
 python -m venv .venv
+
 # Windows:
 .venv\Scripts\activate
 # macOS/Linux:
@@ -145,38 +219,204 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Configuration
+### 5. Configure environment
 
 ```bash
 cp .env.example .env
-# Edit .env and add your Anthropic API key
 ```
 
-### Run
+Edit `.env`:
+
+```env
+ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
+DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/aws_finserv
+TAVILY_API_KEY=tvly-your-key-here
+```
+
+### 6. Run the app
 
 ```bash
 streamlit run app.py
 ```
 
-### Index Your First Service
+On first boot, `startup_ingest.py` runs in the background and indexes all primary AWS services (~15-20 minutes). The app is immediately usable — indexing runs behind the scenes.
 
-1. Open the app in your browser (default: `http://localhost:8501`)
-2. In the sidebar, expand **Select Topics / Services**
-3. Check the services you want (e.g. Lambda, S3, VPC)
-4. Set **Max pages per topic** (20 is a good starting point)
-5. Click **Fetch & Index Documentation**
-6. Once indexing completes, start asking questions
-
-### CLI Ingestion (alternative)
+### 7. Run Tests
 
 ```bash
-# Ingest specific services
-python -m ingestion.ingest_pipeline --keys lambda s3 vpc --max-pages 20
+python -m pytest tests/test_build_validation.py -v
+```
 
-# Ingest by topic keywords
-python -m ingestion.ingest_pipeline --topics serverless "data lake" security
+Expected: 48 passed.
 
-# Ingest everything (slow — ~30 min)
+---
+
+## Railway Deployment (Recommended)
+
+Railway handles PostgreSQL, environment variables, and deployment automatically.
+
+### Step 1: Create a Railway account
+
+Go to [railway.app](https://railway.app) and sign up.
+
+### Step 2: Create a new project
+
+Dashboard -> New Project -> Empty Project (or deploy from GitHub).
+
+### Step 3: Add PostgreSQL
+
+In your project:
+1. New -> Database -> Add PostgreSQL
+2. Railway creates `DATABASE_URL` automatically — **do not add it manually**
+3. Enable the pgvector extension. In Railway, open the PostgreSQL service -> Query tab, then run:
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS vector;
+   ```
+
+### Step 4: Connect your code
+
+**Option A — GitHub (recommended):**
+1. New -> GitHub Repo -> authorize Railway -> select this repository
+2. Railway auto-deploys on every push to your main branch
+
+**Option B — Railway CLI:**
+```bash
+npm install -g @railway/cli
+railway login
+railway link        # link to your project
+railway up          # deploy
+```
+
+### Step 5: Set environment variables
+
+In Railway -> your service -> Variables tab, add:
+
+```
+ANTHROPIC_API_KEY    sk-ant-api03-your-key-here
+TAVILY_API_KEY       tvly-your-key-here
+```
+
+> `DATABASE_URL` is injected automatically by the PostgreSQL plugin. Do not add it.
+
+### Step 6: Verify railway.toml
+
+The `railway.toml` at the root of this project is already configured:
+
+```toml
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python startup_ingest.py & streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+```
+
+This starts the background indexer AND the Streamlit app simultaneously. The app is available immediately while indexing runs in the background.
+
+### Step 7: Get your public URL
+
+Railway -> your service -> Settings -> Generate Domain.
+
+Your app will be at `https://your-app-name.up.railway.app`.
+
+### Railway Resource Requirements
+
+| Plan | vCPU | RAM | Recommendation |
+|------|------|-----|----------------|
+| Starter | 0.5 | 512 MB | NOT recommended — embedding model needs more RAM |
+| **Hobby** | **1** | **1 GB** | **Minimum for production use** |
+| Pro | 2+ | 2 GB+ | Recommended for team use / multiple concurrent users |
+
+The embedding model (sentence-transformers `all-MiniLM-L6-v2`) loads ~90 MB into memory. Combined with the Streamlit app and PostgreSQL client, you need at least 1 GB RAM.
+
+### Weekly Documentation Refresh (Railway Cron)
+
+Set up automatic re-indexing of stale AWS documentation:
+
+1. Railway -> your project -> New -> Cron Job
+2. Command: `python refresh_ingest.py`
+3. Schedule: `0 3 * * 0` (Sunday 3:00 AM UTC)
+
+---
+
+## Database Schema
+
+All tables are created automatically on first run. You only need to create the database and enable pgvector.
+
+### Tables
+
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `doc_chunks` | Vector knowledge base — AWS doc chunks | `embedding vector(384)`, `source_url`, `tier`, `ingestion_date` |
+| `ingestion_manifest` | Tracks what was indexed when | `manifest_json` (last_updated, total_chunks, sources) |
+| `customers` | Customer workspaces | `name`, `industry` (entity type), `arch_context`, `stage` |
+| `conversations` | Conversation threads per customer | `customer_id` (FK), `title`, timestamps |
+| `messages` | Individual message turns | `conversation_id` (FK), `role`, `message_type`, `content_text`, `is_display_turn` |
+| `customer_documents` | Uploaded PDFs, Word docs, etc. | `customer_id` (FK), `filename`, `extracted_text`, `is_active` |
+
+### pgvector Configuration
+
+The `doc_chunks` table uses an HNSW index on the embedding column for fast approximate nearest-neighbor search:
+
+```sql
+CREATE INDEX ON doc_chunks USING hnsw (embedding vector_cosine_ops);
+```
+
+This is created automatically by the app on first run.
+
+### Verify pgvector is working
+
+```sql
+\c aws_finserv
+SELECT * FROM pg_available_extensions WHERE name = 'vector';
+-- Should show installed = true
+```
+
+---
+
+## Indexed AWS Services
+
+### Primary Services (Auto-indexed at first boot, ~15-20 minutes)
+
+| Category | Services |
+|----------|---------|
+| Compute | Lambda, EC2, ECS, EKS |
+| Storage | S3 |
+| Databases | RDS, DynamoDB, Redshift, ElastiCache |
+| Networking | VPC, CloudFront, API Gateway, PrivateLink |
+| **Security (FinServ Core)** | **IAM, IAM Identity Center, KMS, Cognito, GuardDuty, SecurityHub, Macie, WAF** |
+| **Compliance (FinServ Core)** | **CloudTrail, AWS Config, Audit Manager, AWS Backup, Control Tower** |
+| Analytics | Glue, Kinesis, Athena |
+| Messaging | SQS, SNS, EventBridge, Step Functions |
+| **AI / ML (FinServ Core)** | **Bedrock, Bedrock AgentCore, SageMaker, Amazon A2I** |
+| DevOps | CloudFormation, CloudWatch, Secrets Manager |
+| Governance | Organizations, Control Tower |
+
+### Optional Services (Index via sidebar or CLI)
+
+**Extended Security:** CloudHSM, Shield, Network Firewall, Inspector, Detective, Access Analyzer, Artifact
+
+**Extended AI/ML:** Comprehend, Textract, Rekognition, Transcribe, Lex, Amazon Connect, Forecast
+
+**Extended Analytics:** EMR, QuickSight, OpenSearch, Lake Formation
+
+**Extended DevOps:** CodeBuild, CodePipeline, CDK
+
+**Networking:** Route 53, Direct Connect, Global Accelerator
+
+**Financial Services Solutions:** AWS Financial Services page, Reference Architectures, Prescriptive Guidance
+
+### CLI Ingestion
+
+```bash
+# Index specific services
+python -m ingestion.ingest_pipeline --keys macie inspector shield --max-pages 20
+
+# Index by topic keywords
+python -m ingestion.ingest_pipeline --topics "pci dss" "fraud detection" "aml"
+
+# Index everything (slow -- 30+ minutes)
 python -m ingestion.ingest_pipeline --all --max-pages 20
 ```
 
@@ -184,52 +424,64 @@ python -m ingestion.ingest_pipeline --all --max-pages 20
 
 ## Example Questions
 
-> *"We run a 3-tier web app on-prem with SQL Server, IIS, and Windows file servers. We want to migrate to AWS, target 99.9% uptime, and reduce OpEx by 30%. Where do we start?"*
+**Compliance-First Architecture:**
+> *"Design a secure document processing pipeline for mortgage applications. We're an OCC-regulated bank handling NPI and need to comply with GLBA and FFIEC requirements."*
 
-> *"Design a serverless data pipeline that ingests clickstream events, enriches them with ML predictions, and loads them into a data warehouse for BI reporting."*
+**GenAI with Governance:**
+> *"We want to build an AI assistant for AML investigators to generate transaction monitoring narratives. What does the Bedrock architecture look like, and how do we align with the April 2026 Interagency Model Risk Management Guidance?"*
 
-> *"What's the difference between SQS and EventBridge, and when would I use each in a microservices architecture?"*
+**PCI DSS Remediation:**
+> *"Our QSA flagged that our disk-level encryption doesn't satisfy PCI DSS v4.0.1 Requirement 3. We store PANs in RDS. What exactly do we need to change and how?"*
 
-> *"Walk me through setting up least-privilege IAM roles for an ECS Fargate task that reads from S3 and writes to DynamoDB."*
+**Multi-Stakeholder:**
+> *"Design a fraud detection system. Address the CIO's cost concerns, the CSO's PCI DSS obligations, and the CTO's need to integrate with our existing Kafka pipeline."*
+
+**Discovery Brief:**
+> *"Generate a discovery brief for First National Bank of Springfield — website firstnationalbank.com, CISO on the call, upcoming OCC exam, interested in GenAI."*
 
 ---
 
 ## Configuration Reference
 
-| Setting | File | Default | Description |
-|---|---|---|---|
-| `MODEL_NAME` | `config.py` | `claude-sonnet-4-6` | Claude model to use |
-| `MAX_TOKENS` | `config.py` | `32000` | Max response tokens |
-| `TOP_K` | `config.py` | `8` | Chunks retrieved per KB search |
+| Setting | File | Default | Notes |
+|---------|------|---------|-------|
+| `MODEL_NAME` | `config.py` | `claude-sonnet-4-6` | Claude model for all three agents |
+| `MAX_TOKENS` | `config.py` | `32,000` | Max tokens per agent call (synthesis can be large) |
+| `TOP_K` | `config.py` | `10` | KB chunks per search (higher than original for compliance context) |
 | `CHUNK_SIZE` | `config.py` | `800` | Characters per chunk |
 | `CHUNK_OVERLAP` | `config.py` | `100` | Overlap between chunks |
-| `REQUEST_DELAY` | `config.py` | `0.75s` | Delay between scraper requests |
-| `MIN_CONTENT_LENGTH` | `config.py` | `300` | Skip pages shorter than this |
-
----
-
-## Notes
-
-- The ChromaDB vector store (`chroma_store/`) and downloaded markdown (`docs/`) are created locally and excluded from version control via `.gitignore`
-- Re-running ingestion on the same service upserts by content hash — no duplicate chunks
-- A `docs/manifest.json` tracks what was indexed and when, shown in the sidebar
+| `COLLECTION_NAME` | `config.py` | `aws_finserv_docs` | pgvector collection identifier |
+| `EMBEDDING_MODEL` | `config.py` | `all-MiniLM-L6-v2` | Sentence-transformers model (384-dim) |
+| `REQUEST_DELAY` | `config.py` | `0.75s` | Delay between scraper requests (be polite) |
 
 ---
 
 ## Tech Stack
 
 | Component | Technology |
-|---|---|
-| LLM | Claude Sonnet 4.6 (Anthropic) via streaming API |
+|-----------|-----------|
+| LLM | Claude Sonnet 4.6 (Anthropic) — streaming API |
 | Agent framework | Native Anthropic tool use (no LangChain) |
-| Vector store | ChromaDB (persistent, local) |
-| Embeddings | `all-MiniLM-L6-v2` (sentence-transformers) |
+| Vector store | PostgreSQL + pgvector (HNSW cosine similarity) |
+| Embeddings | `all-MiniLM-L6-v2` (sentence-transformers, 384-dim) |
+| Web search | Tavily API (discovery briefs) |
 | Web scraping | requests + BeautifulSoup4 + markdownify |
 | Frontend | Streamlit |
 | Doc parsing | pdfplumber (PDF), python-docx (Word) |
+| Deployment | Railway (Nixpacks build, PostgreSQL plugin) |
 
 ---
 
-## License
+## Regulatory Accuracy Note
 
+The compliance guidance embedded in this assistant reflects the regulatory landscape as of **May 2026**. Key dates:
 
+- GLBA FTC Safeguards Rule: June 2023 amendments in effect; breach notification effective May 13, 2024
+- PCI DSS v4.0.1: All formerly future-dated requirements mandatory since March 31, 2025
+- PCAOB AS 1105 (audit evidence): Effective for fiscal years ending December 15, 2024+
+- FFIEC DA&M Booklet: Updated August 2024 (replaced 2004 version)
+- Interagency MRM Guidance: April 17, 2026 supersedes SR 11-7 and OCC 2011-12; Gen AI explicitly excluded pending RFI
+- NIST AI 600-1 (Generative AI Profile): July 26, 2024
+- NIST Agentic AI Profile: Draft 2025 (CSA/NIST collaboration)
+
+**Always validate regulatory guidance with qualified legal and compliance counsel before customer use. This tool provides architectural guidance and is not legal advice.**

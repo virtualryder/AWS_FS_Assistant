@@ -1,16 +1,16 @@
 """
 Curated seed URLs and crawl boundary rules for AWS documentation sources.
-Each entry maps a human-readable key to metadata the scraper uses.
+Enhanced for financial services: includes security, compliance, AI/ML, and
+data services most relevant to banks, insurers, fintechs, and payment processors.
 """
 
-# Domains allowed during crawling — scraper will not follow links outside these
+# Domains allowed during crawling
 ALLOWED_DOMAINS = {
     "docs.aws.amazon.com",
     "aws.amazon.com",
 }
 
 # URL path prefixes that define the crawl boundary per source.
-# The scraper will only follow links whose path starts with one of these.
 CRAWL_BOUNDARIES = {
     "docs.aws.amazon.com": [
         "/lambda/",
@@ -73,16 +73,36 @@ CRAWL_BOUNDARIES = {
         "/personalize/",
         "/cdk/",
         "/appflow/",
+        # Financial services security additions
+        "/macie/",
+        "/shield/",
+        "/artifact/",
+        "/aws-backup/",
+        "/directconnect/",
+        "/privatelink/",
+        "/network-firewall/",
+        "/detective/",
+        "/inspector/",
+        "/auditmanager/",
+        "/acm-pca/",
+        "/controltower/",
+        "/access-analyzer/",
+        "/ram/",
+        "/sso/",
+        "/identitystore/",
+        "/connect/",
+        "/AmazonS3Vectors/",
     ],
     "aws.amazon.com": [
         "/solutions/",
         "/prescriptive-guidance/",
         "/architecture/",
+        "/financial-services/",
+        "/compliance/",
     ],
 }
 
 # Seed URLs organised by source key.
-# These are the starting points for each crawl.
 SEED_URLS = {
     # ── Compute ────────────────────────────────────────────────────────────
     "lambda": {
@@ -172,16 +192,52 @@ SEED_URLS = {
         "source_label": "AWS Documentation",
         "tier": 1,
     },
-    # ── Security ───────────────────────────────────────────────────────────
+    "direct_connect": {
+        "name": "AWS Direct Connect User Guide",
+        "url": "https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "privatelink": {
+        "name": "AWS PrivateLink User Guide",
+        "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "network_firewall": {
+        "name": "AWS Network Firewall Developer Guide",
+        "url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/what-is-aws-network-firewall.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "global_accelerator": {
+        "name": "AWS Global Accelerator Developer Guide",
+        "url": "https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    # ── Security & Identity (Financial Services Priority) ──────────────────
     "iam": {
         "name": "AWS IAM User Guide",
         "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
+    "iam_identity_center": {
+        "name": "AWS IAM Identity Center User Guide",
+        "url": "https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
     "kms": {
         "name": "AWS KMS Developer Guide",
         "url": "https://docs.aws.amazon.com/kms/latest/developerguide/overview.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "cloudhsm": {
+        "name": "AWS CloudHSM User Guide",
+        "url": "https://docs.aws.amazon.com/cloudhsm/latest/userguide/introduction.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
@@ -194,6 +250,91 @@ SEED_URLS = {
     "guardduty": {
         "name": "Amazon GuardDuty User Guide",
         "url": "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "securityhub": {
+        "name": "AWS Security Hub User Guide",
+        "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "macie": {
+        "name": "Amazon Macie User Guide",
+        "url": "https://docs.aws.amazon.com/macie/latest/user/what-is-macie.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "detective": {
+        "name": "Amazon Detective User Guide",
+        "url": "https://docs.aws.amazon.com/detective/latest/userguide/detective-overview.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "inspector": {
+        "name": "Amazon Inspector User Guide",
+        "url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "shield": {
+        "name": "AWS Shield Developer Guide",
+        "url": "https://docs.aws.amazon.com/waf/latest/developerguide/shield-chapter.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "waf": {
+        "name": "AWS WAF Developer Guide",
+        "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "access_analyzer": {
+        "name": "AWS IAM Access Analyzer User Guide",
+        "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    # ── Compliance & Audit (Financial Services Core) ───────────────────────
+    "artifact": {
+        "name": "AWS Artifact User Guide",
+        "url": "https://docs.aws.amazon.com/artifact/latest/ug/what-is-aws-artifact.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "audit_manager": {
+        "name": "AWS Audit Manager User Guide",
+        "url": "https://docs.aws.amazon.com/audit-manager/latest/userguide/what-is.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "config": {
+        "name": "AWS Config Developer Guide",
+        "url": "https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "control_tower": {
+        "name": "AWS Control Tower User Guide",
+        "url": "https://docs.aws.amazon.com/controltower/latest/userguide/what-is-control-tower.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "cloudtrail": {
+        "name": "AWS CloudTrail User Guide",
+        "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "organizations": {
+        "name": "AWS Organizations User Guide",
+        "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "backup": {
+        "name": "AWS Backup Developer Guide",
+        "url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
@@ -213,6 +354,12 @@ SEED_URLS = {
     "athena": {
         "name": "Amazon Athena User Guide",
         "url": "https://docs.aws.amazon.com/athena/latest/ug/what-is.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "lakeformation": {
+        "name": "AWS Lake Formation Developer Guide",
+        "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
@@ -241,7 +388,7 @@ SEED_URLS = {
         "source_label": "AWS Documentation",
         "tier": 1,
     },
-    # ── ML / AI ────────────────────────────────────────────────────────────
+    # ── AI / ML (Financial Services Core) ─────────────────────────────────
     "sagemaker": {
         "name": "Amazon SageMaker Developer Guide",
         "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html",
@@ -260,6 +407,24 @@ SEED_URLS = {
         "source_label": "Amazon Bedrock AgentCore Documentation",
         "tier": 1,
     },
+    "a2i": {
+        "name": "Amazon Augmented AI (A2I) Developer Guide",
+        "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/a2i-use-augmented-ai-a2i-human-review-loops.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "comprehend": {
+        "name": "Amazon Comprehend Developer Guide",
+        "url": "https://docs.aws.amazon.com/comprehend/latest/dg/what-is.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "textract": {
+        "name": "Amazon Textract Developer Guide",
+        "url": "https://docs.aws.amazon.com/textract/latest/dg/what-is-textract.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
     # ── DevOps & Management ────────────────────────────────────────────────
     "cloudformation": {
         "name": "AWS CloudFormation User Guide",
@@ -273,9 +438,33 @@ SEED_URLS = {
         "source_label": "AWS Documentation",
         "tier": 1,
     },
-    "cloudtrail": {
-        "name": "AWS CloudTrail User Guide",
-        "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html",
+    "systems_manager": {
+        "name": "AWS Systems Manager User Guide",
+        "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/what-is-systems-manager.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "secrets_manager": {
+        "name": "AWS Secrets Manager User Guide",
+        "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "codepipeline": {
+        "name": "AWS CodePipeline User Guide",
+        "url": "https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "codebuild": {
+        "name": "AWS CodeBuild User Guide",
+        "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html",
+        "source_label": "AWS Documentation",
+        "tier": 1,
+    },
+    "cdk": {
+        "name": "AWS CDK Developer Guide",
+        "url": "https://docs.aws.amazon.com/cdk/v2/guide/home.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
@@ -298,13 +487,13 @@ SEED_URLS = {
         "source_label": "AWS Reference Architecture",
         "tier": 2,
     },
-    # ── Extended AI / ML ───────────────────────────────────────────────────
-    "comprehend": {
-        "name": "Amazon Comprehend Developer Guide",
-        "url": "https://docs.aws.amazon.com/comprehend/latest/dg/what-is.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
+    "financial_services": {
+        "name": "AWS Financial Services Solutions",
+        "url": "https://aws.amazon.com/financial-services/",
+        "source_label": "AWS Financial Services",
+        "tier": 2,
     },
+    # ── Extended AI / ML ───────────────────────────────────────────────────
     "rekognition": {
         "name": "Amazon Rekognition Developer Guide",
         "url": "https://docs.aws.amazon.com/rekognition/latest/dg/what-is.html",
@@ -317,39 +506,21 @@ SEED_URLS = {
         "source_label": "AWS Documentation",
         "tier": 1,
     },
-    "textract": {
-        "name": "Amazon Textract Developer Guide",
-        "url": "https://docs.aws.amazon.com/textract/latest/dg/what-is-textract.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "polly": {
-        "name": "Amazon Polly Developer Guide",
-        "url": "https://docs.aws.amazon.com/polly/latest/dg/what-is.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "translate": {
-        "name": "Amazon Translate Developer Guide",
-        "url": "https://docs.aws.amazon.com/translate/latest/dg/what-is.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
     "lex": {
         "name": "Amazon Lex Developer Guide",
         "url": "https://docs.aws.amazon.com/lexv2/latest/dg/what-is.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
-    "forecast": {
-        "name": "Amazon Forecast Developer Guide",
-        "url": "https://docs.aws.amazon.com/forecast/latest/dg/what-is-forecast.html",
+    "connect": {
+        "name": "Amazon Connect Administrator Guide",
+        "url": "https://docs.aws.amazon.com/connect/latest/adminguide/what-is-amazon-connect.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
-    "personalize": {
-        "name": "Amazon Personalize Developer Guide",
-        "url": "https://docs.aws.amazon.com/personalize/latest/dg/what-is-personalize.html",
+    "forecast": {
+        "name": "Amazon Forecast Developer Guide",
+        "url": "https://docs.aws.amazon.com/forecast/latest/dg/what-is-forecast.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
@@ -369,56 +540,6 @@ SEED_URLS = {
     "opensearch": {
         "name": "Amazon OpenSearch Service Developer Guide",
         "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    # ── Extended DevOps ────────────────────────────────────────────────────
-    "codebuild": {
-        "name": "AWS CodeBuild User Guide",
-        "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "codepipeline": {
-        "name": "AWS CodePipeline User Guide",
-        "url": "https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "codecommit": {
-        "name": "AWS CodeCommit User Guide",
-        "url": "https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "cdk": {
-        "name": "AWS CDK Developer Guide",
-        "url": "https://docs.aws.amazon.com/cdk/v2/guide/home.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    # ── Extended Security ──────────────────────────────────────────────────
-    "securityhub": {
-        "name": "AWS Security Hub User Guide",
-        "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "waf": {
-        "name": "AWS WAF Developer Guide",
-        "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "organizations": {
-        "name": "AWS Organizations User Guide",
-        "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html",
-        "source_label": "AWS Documentation",
-        "tier": 1,
-    },
-    "systems_manager": {
-        "name": "AWS Systems Manager User Guide",
-        "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/what-is-systems-manager.html",
         "source_label": "AWS Documentation",
         "tier": 1,
     },
@@ -443,80 +564,108 @@ SEED_URLS = {
     },
 }
 
-# Maps topic keywords typed by the user to one or more seed keys.
-# Allows partial matching — the scraper checks if any key is a substring of
-# the user's topic string (case-insensitive).
+# Maps topic keywords to one or more seed keys.
 TOPIC_KEYWORD_MAP = {
+    # Financial services specific
+    "financial services": ["financial_services", "prescriptive_guidance", "solutions_library"],
+    "banking": ["financial_services", "prescriptive_guidance", "rds", "kms", "guardduty"],
+    "compliance": ["config", "audit_manager", "artifact", "securityhub", "cloudtrail", "control_tower"],
+    "glba": ["macie", "kms", "guardduty", "cloudtrail", "config", "securityhub"],
+    "pci dss": ["vpc", "kms", "waf", "shield", "cloudtrail", "securityhub", "macie"],
+    "pci": ["vpc", "kms", "waf", "shield", "cloudtrail", "securityhub", "macie"],
+    "sox": ["cloudtrail", "config", "organizations", "codepipeline", "securityhub"],
+    "ffiec": ["cloudtrail", "securityhub", "config", "guardduty", "backup"],
+    "model risk": ["sagemaker", "bedrock", "a2i"],
+    "fraud detection": ["sagemaker", "kinesis", "dynamodb", "bedrock"],
+    "aml": ["sagemaker", "kinesis", "opensearch", "comprehend"],
+    "payment": ["sqs", "kinesis", "rds", "kms", "waf", "vpc"],
+    "document processing": ["textract", "comprehend", "bedrock", "s3"],
+    "zero trust": ["iam", "iam_identity_center", "vpc", "access_analyzer", "organizations"],
+    # Core technology
     "serverless": ["lambda", "api_gateway", "step_functions", "eventbridge", "sqs", "sns"],
     "data pipeline": ["glue", "kinesis", "step_functions", "s3", "athena"],
-    "data lake": ["s3", "glue", "athena", "redshift"],
+    "data lake": ["s3", "glue", "athena", "redshift", "lakeformation"],
     "machine learning": ["sagemaker", "bedrock", "s3"],
     "ml": ["sagemaker", "bedrock", "s3"],
     "ai": ["bedrock", "bedrock_agentcore", "sagemaker"],
-    "generative ai": ["bedrock", "bedrock_agentcore"],
+    "generative ai": ["bedrock", "bedrock_agentcore", "a2i"],
+    "genai": ["bedrock", "bedrock_agentcore", "a2i"],
+    "agent": ["bedrock_agentcore", "bedrock", "step_functions", "lambda"],
+    "rag": ["bedrock", "opensearch", "s3", "kms"],
     "containers": ["ecs", "eks", "ec2"],
     "kubernetes": ["eks"],
     "database": ["rds", "dynamodb", "redshift", "elasticache"],
-    "security": ["iam", "kms", "cognito", "guardduty"],
-    "networking": ["vpc", "route53", "cloudfront", "api_gateway"],
+    "encryption": ["kms", "cloudhsm", "s3", "rds"],
+    "security": ["iam", "kms", "cognito", "guardduty", "securityhub", "macie", "inspector", "waf", "shield"],
+    "networking": ["vpc", "route53", "cloudfront", "api_gateway", "privatelink", "network_firewall"],
     "storage": ["s3", "efs", "elasticache"],
-    "analytics": ["athena", "kinesis", "glue", "redshift"],
-    "monitoring": ["cloudwatch", "cloudtrail"],
-    "devops": ["cloudformation", "cloudwatch", "cloudtrail"],
+    "analytics": ["athena", "kinesis", "glue", "redshift", "quicksight"],
+    "monitoring": ["cloudwatch", "cloudtrail", "securityhub"],
+    "devops": ["cloudformation", "cloudwatch", "cloudtrail", "codepipeline"],
     "messaging": ["sqs", "sns", "eventbridge"],
     "api": ["api_gateway", "lambda"],
     "migration": ["prescriptive_guidance"],
-    "nlp": ["comprehend", "lex", "transcribe", "translate"],
-    "vision": ["rekognition", "textract"],
-    "speech": ["polly", "transcribe"],
-    "big data": ["emr", "glue", "athena", "redshift"],
+    "nlp": ["comprehend", "lex", "transcribe"],
+    "contact center": ["connect", "lex", "transcribe", "bedrock"],
     "search": ["opensearch"],
-    "ci/cd": ["codebuild", "codepipeline", "codecommit"],
+    "ci/cd": ["codebuild", "codepipeline", "cdk"],
     "infrastructure as code": ["cloudformation", "cdk"],
-    "compliance": ["securityhub", "cloudtrail", "organizations"],
-    "file transfer": ["transfer", "datasync"],
-    "windows": ["fsx"],
+    "disaster recovery": ["backup", "rds", "route53", "global_accelerator"],
+    "dr": ["backup", "rds", "route53", "global_accelerator"],
+    "backup": ["backup", "rds", "s3"],
+    "secrets": ["secrets_manager", "kms", "systems_manager"],
+    "audit": ["cloudtrail", "audit_manager", "artifact", "config"],
 }
 
 # ── Canonical seed-key groupings ──────────────────────────────────────────────
 
 # Automatically indexed at boot by startup_ingest.py.
-# Stored in Postgres — persists across all Railway restarts and redeployments.
+# Financial services priority: security, compliance, and AI services lead.
 PRIMARY_SEED_KEYS: list[str] = [
-    # Compute & Containers
+    # Core Compute & Containers
     "lambda", "ec2", "ecs", "eks",
     # Storage
-    "s3", "efs",
+    "s3",
     # Databases
     "rds", "dynamodb", "redshift", "elasticache",
     # Networking
-    "vpc", "route53", "cloudfront", "api_gateway",
-    # Security & Identity
-    "iam", "kms", "cognito", "guardduty",
+    "vpc", "cloudfront", "api_gateway", "privatelink",
+    # Security & Identity (Financial Services Core)
+    "iam", "iam_identity_center", "kms", "cognito", "guardduty",
+    "securityhub", "macie", "waf",
+    # Compliance & Audit (Financial Services Core)
+    "cloudtrail", "config", "audit_manager", "backup",
     # Analytics & Data
     "glue", "kinesis", "athena",
     # Messaging & Integration
     "sqs", "sns", "eventbridge", "step_functions",
-    # AI / ML
-    "sagemaker", "bedrock", "bedrock_agentcore",
+    # AI / ML (Financial Services Core)
+    "sagemaker", "bedrock", "bedrock_agentcore", "a2i",
     # DevOps & Management
-    "cloudformation", "cloudwatch", "cloudtrail",
+    "cloudformation", "cloudwatch", "secrets_manager",
+    # Organizations & Governance
+    "organizations", "control_tower",
 ]
 
 # Available for optional manual ingestion via the sidebar.
-# Grouped for UI display — order matches OPTIONAL_CATEGORIES in app.py.
 OPTIONAL_SEED_KEYS: list[str] = [
+    # Extended Security & Compliance
+    "cloudhsm", "shield", "network_firewall", "inspector", "detective",
+    "access_analyzer", "artifact",
     # Extended AI / ML
-    "comprehend", "rekognition", "transcribe", "textract",
-    "polly", "translate", "lex", "forecast", "personalize",
+    "comprehend", "rekognition", "transcribe", "textract", "lex",
+    "connect", "forecast",
     # Extended Analytics
-    "emr", "quicksight", "opensearch",
+    "emr", "quicksight", "opensearch", "lakeformation",
     # Extended DevOps
-    "codebuild", "codepipeline", "codecommit", "cdk",
-    # Extended Security
-    "securityhub", "waf", "organizations", "systems_manager",
+    "codebuild", "codepipeline", "cdk",
+    # Extended Networking
+    "route53", "direct_connect", "global_accelerator",
     # Extended Storage & Transfer
-    "fsx", "transfer", "datasync",
+    "efs", "fsx", "transfer", "datasync",
+    # Extended Management
+    "systems_manager",
     # Guidance & Solutions
     "prescriptive_guidance", "solutions_library", "reference_architecture",
+    "financial_services",
 ]
