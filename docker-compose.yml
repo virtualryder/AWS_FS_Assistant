@@ -1,0 +1,43 @@
+version: "3.9"
+
+# Local development stack:
+#   docker-compose up
+#
+# Services:
+#   api       — FastAPI backend on :8000
+#   frontend  — Next.js dev server on :3000
+#
+# Prerequisites:
+#   - Copy .env.example to .env and fill in ANTHROPIC_API_KEY, DATABASE_URL, TAVILY_API_KEY
+#   - A running PostgreSQL instance with pgvector (or use Railway's DATABASE_URL)
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount source for hot-reload in development
+      - .:/app
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app/frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - api
+    restart: unless-stopped

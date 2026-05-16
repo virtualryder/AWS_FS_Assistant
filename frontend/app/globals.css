@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+
+:root {
+  --aws-orange:   #FF9900;
+  --aws-orange-dk:#E68A00;
+  --presidio-blue:#003087;
+  --sidebar-width:280px;
+}
+
+html {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ── AWS orange accent ─────────────────────────────────────────────────────── */
+
+.accent-border { border-left: 3px solid var(--aws-orange); }
+
+/* ── Markdown prose overrides ──────────────────────────────────────────────── */
+
+.prose pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+}
+
+.prose code:not(pre code) {
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 0.15em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.88em;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.prose th {
+  background: #f8fafc;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.prose td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.prose tr:nth-child(even) td { background: #fafafa; }
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--aws-orange);
+  padding-left: 1rem;
+  color: #475569;
+  font-style: italic;
+}
+
+/* ── Stage badge colors ────────────────────────────────────────────────────── */
+
+.stage-prospect           { background: #e2e8f0; color: #475569; }
+.stage-active             { background: #dbeafe; color: #1d4ed8; }
+.stage-poc                { background: #fed7aa; color: #c2410c; }
+.stage-closed             { background: #d1fae5; color: #065f46; }
+.stage-inactive           { background: #f1f5f9; color: #94a3b8; }
+
+/* ── Chat bubbles ──────────────────────────────────────────────────────────── */
+
+.chat-user {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 1rem 1rem 0.25rem 1rem;
+}
+
+.chat-assistant {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem 1rem 1rem 1rem;
+}
+
+/* ── Status stream ticker ──────────────────────────────────────────────────── */
+
+.status-ticker {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────────── */
+
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  max-width: var(--sidebar-width);
+}
