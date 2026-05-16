@@ -1,0 +1,15 @@
+# ── Railway config for the Next.js frontend service ──────────────────────────
+# Deploy this service from the /frontend subdirectory of the repo.
+# Set Root Directory = "frontend" in the Railway service settings.
+#
+# Required environment variable (Railway Variables tab):
+#   NEXT_PUBLIC_API_URL — set to the Railway URL of your API service
+#   e.g. https://your-api-service.up.railway.app
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run start"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

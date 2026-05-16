@@ -1,10 +1,19 @@
+# ── Railway config for the FastAPI backend service ───────────────────────────
+# Deploy this service from the repo root using Dockerfile.api.
+#
+# In your Railway project you will have TWO services:
+#   1. This service (API)      — Dockerfile.api at repo root
+#   2. Frontend service        — Next.js from the /frontend subdirectory
+#
+# See README.md → Railway Deployment for step-by-step instructions.
+
 [build]
-builder = "nixpacks"
+dockerfile = "Dockerfile.api"
 
 [deploy]
-# startup_ingest.py runs in the background (&) so the app starts immediately.
-# On first boot it indexes all 30 primary AWS services (~15-20 min).
-# On every subsequent restart it exits in <1 second (DB already populated).
-startCommand = "python startup_ingest.py & streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
+# startup_ingest.py runs in the background so the API is available immediately.
+# On first boot it indexes all primary AWS services (~15-20 min).
+# On subsequent restarts it exits in <1 second (DB already populated).
+startCommand = "python startup_ingest.py & uvicorn api.main:app --host 0.0.0.0 --port $PORT --workers 1"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3

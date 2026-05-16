@@ -36,17 +36,26 @@ The assistant fields architecture and GenAI/ML questions from your account team 
 
 ```
 +------------------------------------------------------------------+
-|                     Streamlit Frontend                           |
-|  Sidebar: KB metrics . compliance reference . customer mgmt      |
-|  Main: customer profile . discovery brief . chat interface       |
+|                     Next.js Frontend (App Router)                |
+|  Sidebar: KB metrics · compliance reference · customer list      |
+|  Pages: /customers · /customers/[id] · /conversations/[id]       |
+|  SSE streaming via fetch + ReadableStream                        |
++----------------------------+-------------------------------------+
+                             | REST + SSE (JSON / text/event-stream)
+                             v
++------------------------------------------------------------------+
+|              FastAPI Backend  (api/)                             |
+|  /api/customers  /api/conversations  /api/conversations/{id}/chat|
+|  /api/customers/{id}/discovery  /api/knowledge-base/status       |
+|  Session store: FinServChatAgent per conversation (TTL eviction) |
+|  SSE bridge: ThreadPoolExecutor → asyncio.Queue → EventSource    |
 +----------------------------+-------------------------------------+
                              |
-                             | user question + customer context
                              v
 +------------------------------------------------------------------+
 |              FinServChatAgent (Orchestrator)                     |
 |  Routes: full analysis vs. quick answer                          |
-|  Runs: Phase 1 (Architect) -> Phase 2 (GenAI) -> Synthesis       |
+|  Runs: Phase 1 (Architect) → Phase 2 (GenAI) → Synthesis        |
 +---------------+---------------------------+----------------------+
                 |                           |
                 v                           v
@@ -54,20 +63,20 @@ The assistant fields architecture and GenAI/ML questions from your account team 
 |  AWSArchitectAgent       |  |  GenAIMLAgent                |
 |  (Phase 1)               |  |  (Phase 2)                   |
 |                          |  |                              |
-| . Architecture design    |  | . Bedrock/AgentCore/SageMaker|
-| . GLBA compliance map    |  | . NIST AI RMF governance     |
-| . PCI DSS v4.0.1         |  | . MRM Guidance alignment     |
-| . SOX ITGC coverage      |  | . Fair lending (ECOA)        |
-| . FFIEC alignment        |  | . AI workflow diagrams       |
-| . Whiteboard diagram     |  | . Model inventory templates  |
-| . CIO/CSO/CTO/LoB views  |  | . Human review gates (A2I)   |
+| · Architecture design    |  | · Bedrock/AgentCore/SageMaker|
+| · GLBA compliance map    |  | · NIST AI RMF governance     |
+| · PCI DSS v4.0.1         |  | · MRM Guidance alignment     |
+| · SOX ITGC coverage      |  | · Fair lending (ECOA)        |
+| · FFIEC alignment        |  | · AI workflow diagrams       |
+| · Whiteboard diagram     |  | · Model inventory templates  |
+| · CIO/CSO/CTO/LoB views  |  | · Human review gates (A2I)   |
 +-----------+--------------+  +------------+-----------------+
             |                              |
             +---------------+--------------+
                             |
                             v
 +------------------------------------------------------------------+
-|  Synthesis Pass -- Combined Response                             |
+|  Synthesis Pass — Combined Response                              |
 |  Unified: Architecture + Compliance + GenAI + Governance         |
 +-------------------+-------------------------+--------------------+
                     |                         |
@@ -105,35 +114,78 @@ The assistant fields architecture and GenAI/ML questions from your account team 
 
 ```
 AWS Financial Services Assistant/
-|-- app.py                          # Streamlit UI entry point
-|-- config.py                       # Settings (model, chunking, retrieval, branding)
-|-- requirements.txt
-|-- railway.toml                    # Railway deployment config
-|-- startup_ingest.py               # Background indexer on first boot
-|-- refresh_ingest.py               # Weekly stale-content refresh
-|
-|-- agent/
-|   |-- chat_agent.py               # FinServChatAgent orchestrator
-|   |-- aws_architect_agent.py      # NEW: AWS architecture + compliance specialist
-|   |-- genai_ml_agent.py           # NEW: GenAI/ML + AI governance specialist
-|   |-- discovery_agent.py          # Financial services discovery brief generator
-|   |-- tools.py                    # Tool schemas for Claude API
-|   `-- tool_executor.py            # Tool implementations (KB search, live fetch, web)
-|
-|-- scraper/
-|   |-- aws_scraper.py              # BFS HTML crawler -> markdown converter
-|   `-- aws_doc_urls.py             # 60+ seed URLs (financial services priority)
-|
-|-- ingestion/
-|   |-- ingest_pipeline.py          # Orchestrate crawl -> chunk -> embed -> upsert
-|   |-- chunker.py                  # Overlapping character-window chunking
-|   `-- document_parser.py         # PDF / DOCX / TXT extraction
-|
-|-- vectorstore/
-|   `-- pg_client.py                # PostgreSQL + pgvector client (HNSW index)
-|
-`-- tests/
-    `-- test_build_validation.py    # 48-test build validation suite
+├── app.py                          # Legacy Streamlit UI (still runnable)
+├── config.py                       # Settings (model, chunking, retrieval, branding)
+├── requirements.txt                # Python deps for Streamlit app
+├── requirements-api.txt            # Python deps for FastAPI backend
+├── railway.toml                    # Railway config — FastAPI backend service
+├── Dockerfile.api                  # Docker image for FastAPI backend
+├── docker-compose.yml              # Local dev: API on :8000 + frontend on :3000
+├── startup_ingest.py               # Background indexer on first boot
+├── refresh_ingest.py               # Weekly stale-content refresh
+│
+├── api/                            # FastAPI backend (replaces Streamlit for prod)
+│   ├── main.py                     # FastAPI app, CORS, lifespan
+│   ├── session_store.py            # In-memory FinServChatAgent sessions w/ TTL
+│   ├── streaming.py                # ThreadPoolExecutor → asyncio.Queue SSE bridge
+│   └── routers/
+│       ├── customers.py            # GET/POST/PUT/DELETE /api/customers
+│       ├── conversations.py        # Conversation CRUD + message history
+│       ├── chat.py                 # POST /api/conversations/{id}/chat  (SSE)
+│       ├── documents.py            # Upload/toggle/delete customer documents
+│       ├── discovery.py            # POST /api/customers/{id}/discovery (SSE)
+│       └── knowledge_base.py       # KB status + ingest trigger
+│
+├── frontend/                       # Next.js 14 App Router frontend
+│   ├── package.json
+│   ├── next.config.ts              # Rewrites /api/* → FastAPI backend
+│   ├── tailwind.config.ts          # AWS orange + Presidio blue theme
+│   ├── railway.toml                # Railway config — frontend service
+│   ├── app/
+│   │   ├── layout.tsx              # Root layout with Inter font
+│   │   ├── globals.css             # Tailwind base + custom styles
+│   │   ├── customers/page.tsx      # Customer list / welcome screen
+│   │   ├── customers/[id]/page.tsx # Customer detail (tabs: Conversations/Discovery/Docs)
+│   │   └── customers/[id]/conversations/[id]/page.tsx  # Chat interface
+│   ├── components/
+│   │   ├── chat/ChatWindow.tsx     # Streaming chat with status ticker
+│   │   ├── discovery/DiscoveryPanel.tsx  # Discovery brief generator
+│   │   ├── sidebar/Sidebar.tsx     # Customer list + compliance reference
+│   │   ├── customers/             # CustomerHeader, CustomerList, DocumentsPanel, NewCustomerModal
+│   │   ├── conversations/         # ConversationList
+│   │   └── common/                # MarkdownRenderer, CopyButton, StageBadge, StatusTicker
+│   ├── hooks/
+│   │   ├── useSSEStream.ts         # Generic POST → ReadableStream SSE hook
+│   │   ├── useChatStream.ts        # Chat-specific wrapper
+│   │   └── useDiscoveryStream.ts   # Discovery brief wrapper
+│   └── lib/
+│       ├── types.ts                # TypeScript interfaces
+│       ├── api.ts                  # Fetch wrappers for all endpoints
+│       ├── constants.ts            # Stages, entity types, compliance refs, API base
+│       └── utils.ts                # timeAgo, truncate, copyToClipboard, downloadText
+│
+├── agent/
+│   ├── chat_agent.py               # FinServChatAgent orchestrator
+│   ├── aws_architect_agent.py      # AWS architecture + compliance specialist
+│   ├── genai_ml_agent.py           # GenAI/ML + AI governance specialist
+│   ├── discovery_agent.py          # Financial services discovery brief generator
+│   ├── tools.py                    # Tool schemas for Claude API
+│   └── tool_executor.py            # Tool implementations (KB search, live fetch, web)
+│
+├── scraper/
+│   ├── aws_scraper.py              # BFS HTML crawler → markdown converter
+│   └── aws_doc_urls.py             # 60+ seed URLs (financial services priority)
+│
+├── ingestion/
+│   ├── ingest_pipeline.py          # Orchestrate crawl → chunk → embed → upsert
+│   ├── chunker.py                  # Overlapping character-window chunking
+│   └── document_parser.py          # PDF / DOCX / TXT extraction
+│
+├── vectorstore/
+│   └── pg_client.py                # PostgreSQL + pgvector client (HNSW index)
+│
+└── tests/
+    └── test_build_validation.py    # 48-test build validation suite
 ```
 
 ---
@@ -144,15 +196,17 @@ You need **three** credentials. Set them as environment variables (`.env` locall
 
 | Variable | Required | Where to Get It | Purpose |
 |----------|----------|----------------|---------|
-| `ANTHROPIC_API_KEY` | YES | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Powers all three Claude agents |
+| `ANTHROPIC_API_KEY` | YES | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Powers all Claude agents |
 | `DATABASE_URL` | YES | Railway PostgreSQL plugin (auto-injected) or your own PostgreSQL with pgvector | Vector KB + customer workspaces + conversations |
 | `TAVILY_API_KEY` | YES (Discovery Briefs) | [app.tavily.com](https://app.tavily.com) | Web search for discovery brief company research |
+
+> `DATABASE_URL` is **automatically injected** by the Railway PostgreSQL plugin. Do not add it manually to the API service.
 
 ### Getting Your API Keys
 
 **Anthropic API Key:**
 1. Go to [console.anthropic.com](https://console.anthropic.com)
-2. Settings -> API Keys -> Create Key
+2. Settings → API Keys → Create Key
 3. Copy the `sk-ant-...` key
 
 **Tavily API Key:**
@@ -160,55 +214,57 @@ You need **three** credentials. Set them as environment variables (`.env` locall
 2. Sign up (free tier: 1,000 searches/month)
 3. Copy your API key from the dashboard
 
-**Database:** See Database Setup section below.
-
 ---
 
 ## Local Development
 
-### 1. Install Python
+Two options: **Docker Compose** (easiest) or **manual** (if you have PostgreSQL already).
 
-Python 3.11+ required. Download from [python.org](https://python.org).
-
-### 2. Install PostgreSQL + pgvector
-
-**Windows:**
-1. Download PostgreSQL installer from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/)
-2. Run installer — note your password and port (default: 5432)
-3. For pgvector: download the Windows binary from [pgvector releases](https://github.com/pgvector/pgvector/releases) and follow the Windows install instructions
-
-**macOS (Homebrew):**
-```bash
-brew install postgresql@16
-brew services start postgresql@16
-# pgvector via extension:
-psql postgres -c "CREATE EXTENSION IF NOT EXISTS vector;"
-```
-
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt install postgresql postgresql-contrib
-sudo apt install postgresql-16-pgvector   # match your PostgreSQL version
-```
-
-### 3. Create the database
+### Option A — Docker Compose
 
 ```bash
-psql -U postgres
+# 1. Clone the repo
+git clone https://github.com/virtualryder/AWS_FS_Assistant.git
+cd "AWS_FS_Assistant"
+
+# 2. Create your .env file
+cp .env.example .env
+# Edit .env — set ANTHROPIC_API_KEY, DATABASE_URL, TAVILY_API_KEY
+
+# 3. Start API + frontend
+docker-compose up
 ```
 
+- API available at `http://localhost:8000`
+- Frontend available at `http://localhost:3000`
+- Both services hot-reload on file changes
+
+### Option B — Manual
+
+#### 1. Set up PostgreSQL + pgvector
+
+**Windows:** Download PostgreSQL from [postgresql.org/download/windows](https://www.postgresql.org/download/windows/), then install pgvector from [github.com/pgvector/pgvector/releases](https://github.com/pgvector/pgvector/releases).
+
+**macOS:**
+```bash
+brew install postgresql@16 && brew services start postgresql@16
+```
+
+**Linux (Ubuntu):**
+```bash
+sudo apt install postgresql postgresql-16-pgvector
+```
+
+Create the database:
 ```sql
 CREATE DATABASE aws_finserv;
 \c aws_finserv
 CREATE EXTENSION IF NOT EXISTS vector;
-\q
 ```
 
-### 4. Set up the Python environment
+#### 2. Python environment (FastAPI backend)
 
 ```bash
-cd "AWS Financial Services Assistant"
-
 python -m venv .venv
 
 # Windows:
@@ -216,127 +272,143 @@ python -m venv .venv
 # macOS/Linux:
 source .venv/bin/activate
 
-pip install -r requirements.txt
+pip install -r requirements-api.txt
 ```
 
-### 5. Configure environment
+#### 3. Configure environment
 
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env`:
-
 ```env
 ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/aws_finserv
 TAVILY_API_KEY=tvly-your-key-here
 ```
 
-### 6. Run the app
+#### 4. Start the FastAPI backend
 
 ```bash
-streamlit run app.py
+uvicorn api.main:app --reload --port 8000
 ```
 
-On first boot, `startup_ingest.py` runs in the background and indexes all primary AWS services (~15-20 minutes). The app is immediately usable — indexing runs behind the scenes.
+On first run, start the background indexer separately (optional — app works without it):
+```bash
+python startup_ingest.py
+```
 
-### 7. Run Tests
+#### 5. Start the Next.js frontend
+
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local
+# .env.local already points to http://localhost:8000 by default
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+#### 6. Run tests
 
 ```bash
 python -m pytest tests/test_build_validation.py -v
+# Expected: 48 passed
 ```
-
-Expected: 48 passed.
 
 ---
 
-## Railway Deployment (Recommended)
+## Railway Deployment
 
-Railway handles PostgreSQL, environment variables, and deployment automatically.
+Railway handles PostgreSQL, environment injection, and deployment automatically. The app runs as **two Railway services** from the same GitHub repository:
 
-### Step 1: Create a Railway account
+| Service | Source | Purpose |
+|---------|--------|---------|
+| **API** | Repo root, `Dockerfile.api` | FastAPI backend — agents, DB, SSE streaming |
+| **Frontend** | `frontend/` subdirectory | Next.js UI |
+| **PostgreSQL** | Railway plugin | pgvector knowledge base + customer data |
+
+### Step 1 — Create a Railway account
 
 Go to [railway.app](https://railway.app) and sign up.
 
-### Step 2: Create a new project
+### Step 2 — Create a new project
 
-Dashboard -> New Project -> Empty Project (or deploy from GitHub).
+Dashboard → New Project → Empty Project.
 
-### Step 3: Add PostgreSQL
+### Step 3 — Add PostgreSQL
 
 In your project:
-1. New -> Database -> Add PostgreSQL
+1. New → Database → Add PostgreSQL
 2. Railway creates `DATABASE_URL` automatically — **do not add it manually**
-3. Enable the pgvector extension. In Railway, open the PostgreSQL service -> Query tab, then run:
+3. Enable pgvector: open the PostgreSQL service → Query tab, run:
    ```sql
    CREATE EXTENSION IF NOT EXISTS vector;
    ```
 
-### Step 4: Connect your code
+### Step 4 — Deploy the API service
 
-**Option A — GitHub (recommended):**
-1. New -> GitHub Repo -> authorize Railway -> select this repository
-2. Railway auto-deploys on every push to your main branch
+1. New → GitHub Repo → authorize Railway → select `AWS_FS_Assistant`
+2. Railway auto-detects `Dockerfile.api` from `railway.toml`
+3. In the service → Variables tab, add:
+   ```
+   ANTHROPIC_API_KEY    sk-ant-api03-your-key-here
+   TAVILY_API_KEY       tvly-your-key-here
+   ```
+4. Link the PostgreSQL plugin to this service (Variables → Add Reference → PostgreSQL → `DATABASE_URL`). This auto-injects `DATABASE_URL`.
+5. In Settings → Generate Domain — note the URL (e.g. `https://aws-finserv-api.up.railway.app`)
 
-**Option B — Railway CLI:**
-```bash
-npm install -g @railway/cli
-railway login
-railway link        # link to your project
-railway up          # deploy
+> The start command from `railway.toml` runs `startup_ingest.py` in the background before starting uvicorn, so documentation indexing begins automatically on first boot.
+
+### Step 5 — Deploy the frontend service
+
+1. In your project → New → GitHub Repo → same repo
+2. In the service → Settings → **Root Directory** = `frontend`
+3. Railway detects Next.js via Nixpacks and uses `frontend/railway.toml`
+4. In Variables tab, add:
+   ```
+   NEXT_PUBLIC_API_URL    https://aws-finserv-api.up.railway.app
+   ```
+   (replace with the actual API service URL from Step 4)
+5. Settings → Generate Domain for the frontend (e.g. `https://aws-finserv.up.railway.app`)
+
+### Step 6 — Update API CORS
+
+Open `api/main.py` and add your frontend Railway domain to `allow_origins`:
+
+```python
+allow_origins=[
+    "http://localhost:3000",
+    "https://aws-finserv.up.railway.app",  # ← add your frontend URL
+],
 ```
 
-### Step 5: Set environment variables
+Commit and push — Railway redeploys automatically.
 
-In Railway -> your service -> Variables tab, add:
+### Step 7 — Verify deployment
 
-```
-ANTHROPIC_API_KEY    sk-ant-api03-your-key-here
-TAVILY_API_KEY       tvly-your-key-here
-```
-
-> `DATABASE_URL` is injected automatically by the PostgreSQL plugin. Do not add it.
-
-### Step 6: Verify railway.toml
-
-The `railway.toml` at the root of this project is already configured:
-
-```toml
-[build]
-builder = "nixpacks"
-
-[deploy]
-startCommand = "python startup_ingest.py & streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
-```
-
-This starts the background indexer AND the Streamlit app simultaneously. The app is available immediately while indexing runs in the background.
-
-### Step 7: Get your public URL
-
-Railway -> your service -> Settings -> Generate Domain.
-
-Your app will be at `https://your-app-name.up.railway.app`.
+1. Open your frontend URL → you should see the customer list page
+2. Check the API: `https://your-api-url.up.railway.app/health` should return `{"status":"ok"}`
+3. Check KB status: `https://your-api-url.up.railway.app/api/knowledge-base/status`
 
 ### Railway Resource Requirements
 
-| Plan | vCPU | RAM | Recommendation |
-|------|------|-----|----------------|
-| Starter | 0.5 | 512 MB | NOT recommended — embedding model needs more RAM |
-| **Hobby** | **1** | **1 GB** | **Minimum for production use** |
-| Pro | 2+ | 2 GB+ | Recommended for team use / multiple concurrent users |
-
-The embedding model (sentence-transformers `all-MiniLM-L6-v2`) loads ~90 MB into memory. Combined with the Streamlit app and PostgreSQL client, you need at least 1 GB RAM.
+| Service | Plan | RAM | Notes |
+|---------|------|-----|-------|
+| **API** | Hobby (1 GB) minimum | ~500 MB | Embedding model loads ~90 MB; agents need headroom |
+| **Frontend** | Starter (512 MB) | ~128 MB | Static Next.js build |
+| **PostgreSQL** | Any | — | Railway plugin; pgvector HNSW index is memory-efficient |
 
 ### Weekly Documentation Refresh (Railway Cron)
 
 Set up automatic re-indexing of stale AWS documentation:
 
-1. Railway -> your project -> New -> Cron Job
-2. Command: `python refresh_ingest.py`
-3. Schedule: `0 3 * * 0` (Sunday 3:00 AM UTC)
+1. Railway → your project → New → Cron Job
+2. Connect to your **API service**
+3. Command: `python refresh_ingest.py`
+4. Schedule: `0 3 * * 0` (Sunday 3:00 AM UTC)
 
 ---
 
@@ -344,33 +416,18 @@ Set up automatic re-indexing of stale AWS documentation:
 
 All tables are created automatically on first run. You only need to create the database and enable pgvector.
 
-### Tables
-
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
 | `doc_chunks` | Vector knowledge base — AWS doc chunks | `embedding vector(384)`, `source_url`, `tier`, `ingestion_date` |
-| `ingestion_manifest` | Tracks what was indexed when | `manifest_json` (last_updated, total_chunks, sources) |
+| `ingestion_manifest` | Tracks what was indexed when | `data JSONB` (last_updated, total_chunks, sources) |
 | `customers` | Customer workspaces | `name`, `industry` (entity type), `arch_context`, `stage` |
 | `conversations` | Conversation threads per customer | `customer_id` (FK), `title`, timestamps |
-| `messages` | Individual message turns | `conversation_id` (FK), `role`, `message_type`, `content_text`, `is_display_turn` |
+| `messages` | Individual message turns | `conversation_id` (FK), `role`, `content_text`, `is_display_turn` |
 | `customer_documents` | Uploaded PDFs, Word docs, etc. | `customer_id` (FK), `filename`, `extracted_text`, `is_active` |
 
-### pgvector Configuration
-
-The `doc_chunks` table uses an HNSW index on the embedding column for fast approximate nearest-neighbor search:
-
+The `doc_chunks` table uses an HNSW index created automatically on first boot:
 ```sql
 CREATE INDEX ON doc_chunks USING hnsw (embedding vector_cosine_ops);
-```
-
-This is created automatically by the app on first run.
-
-### Verify pgvector is working
-
-```sql
-\c aws_finserv
-SELECT * FROM pg_available_extensions WHERE name = 'vector';
--- Should show installed = true
 ```
 
 ---
@@ -391,21 +448,6 @@ SELECT * FROM pg_available_extensions WHERE name = 'vector';
 | Messaging | SQS, SNS, EventBridge, Step Functions |
 | **AI / ML (FinServ Core)** | **Bedrock, Bedrock AgentCore, SageMaker, Amazon A2I** |
 | DevOps | CloudFormation, CloudWatch, Secrets Manager |
-| Governance | Organizations, Control Tower |
-
-### Optional Services (Index via sidebar or CLI)
-
-**Extended Security:** CloudHSM, Shield, Network Firewall, Inspector, Detective, Access Analyzer, Artifact
-
-**Extended AI/ML:** Comprehend, Textract, Rekognition, Transcribe, Lex, Amazon Connect, Forecast
-
-**Extended Analytics:** EMR, QuickSight, OpenSearch, Lake Formation
-
-**Extended DevOps:** CodeBuild, CodePipeline, CDK
-
-**Networking:** Route 53, Direct Connect, Global Accelerator
-
-**Financial Services Solutions:** AWS Financial Services page, Reference Architectures, Prescriptive Guidance
 
 ### CLI Ingestion
 
@@ -416,7 +458,7 @@ python -m ingestion.ingest_pipeline --keys macie inspector shield --max-pages 20
 # Index by topic keywords
 python -m ingestion.ingest_pipeline --topics "pci dss" "fraud detection" "aml"
 
-# Index everything (slow -- 30+ minutes)
+# Index everything (slow — 30+ minutes)
 python -m ingestion.ingest_pipeline --all --max-pages 20
 ```
 
@@ -445,14 +487,13 @@ python -m ingestion.ingest_pipeline --all --max-pages 20
 
 | Setting | File | Default | Notes |
 |---------|------|---------|-------|
-| `MODEL_NAME` | `config.py` | `claude-sonnet-4-6` | Claude model for all three agents |
-| `MAX_TOKENS` | `config.py` | `32,000` | Max tokens per agent call (synthesis can be large) |
-| `TOP_K` | `config.py` | `10` | KB chunks per search (higher than original for compliance context) |
+| `MODEL_NAME` | `config.py` | `claude-sonnet-4-6` | Claude model for all agents |
+| `MAX_TOKENS` | `config.py` | `32,000` | Max tokens per agent call |
+| `TOP_K` | `config.py` | `10` | KB chunks per search |
 | `CHUNK_SIZE` | `config.py` | `800` | Characters per chunk |
 | `CHUNK_OVERLAP` | `config.py` | `100` | Overlap between chunks |
 | `COLLECTION_NAME` | `config.py` | `aws_finserv_docs` | pgvector collection identifier |
 | `EMBEDDING_MODEL` | `config.py` | `all-MiniLM-L6-v2` | Sentence-transformers model (384-dim) |
-| `REQUEST_DELAY` | `config.py` | `0.75s` | Delay between scraper requests (be polite) |
 
 ---
 
@@ -462,13 +503,16 @@ python -m ingestion.ingest_pipeline --all --max-pages 20
 |-----------|-----------|
 | LLM | Claude Sonnet 4.6 (Anthropic) — streaming API |
 | Agent framework | Native Anthropic tool use (no LangChain) |
+| Backend API | FastAPI + uvicorn + sse-starlette |
+| Frontend | Next.js 14 (App Router) + Tailwind CSS |
+| SSE streaming | ThreadPoolExecutor → asyncio.Queue → EventSourceResponse |
 | Vector store | PostgreSQL + pgvector (HNSW cosine similarity) |
 | Embeddings | `all-MiniLM-L6-v2` (sentence-transformers, 384-dim) |
 | Web search | Tavily API (discovery briefs) |
 | Web scraping | requests + BeautifulSoup4 + markdownify |
-| Frontend | Streamlit |
 | Doc parsing | pdfplumber (PDF), python-docx (Word) |
-| Deployment | Railway (Nixpacks build, PostgreSQL plugin) |
+| Deployment | Railway — API service (Dockerfile) + Frontend service (Nixpacks) |
+| Legacy UI | Streamlit (`app.py` — still runnable for local use) |
 
 ---
 
