@@ -17,3 +17,8 @@ dockerfile = "Dockerfile.api"
 startCommand = "python startup_ingest.py & uvicorn api.main:app --host 0.0.0.0 --port $PORT --workers 1"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
+
+# Health check — Railway polls GET /health on $PORT.
+# 300 s timeout gives uvicorn time to start even if startup_ingest is slow.
+healthcheckPath = "/health"
+healthcheckTimeout = 300
