@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
+import DarkModeToggle from "@/components/common/DarkModeToggle";
 
 export const metadata: Metadata = {
   title: "AWS Financial Services Assistant",
@@ -30,7 +31,10 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <DarkModeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );
