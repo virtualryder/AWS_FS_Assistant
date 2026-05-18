@@ -7,7 +7,7 @@
 #   e.g. https://your-api-service.up.railway.app
 
 [build]
-builder = "nixpacks"
+builder = "dockerfile"
 
 [deploy]
 restartPolicyType = "on_failure"
