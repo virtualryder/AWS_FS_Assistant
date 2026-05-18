@@ -403,86 +403,99 @@ class GenAIMLAgent:
         else:
             full_message = user_message
 
+        # Checkpoint so we can roll back if anything goes wrong mid-turn
+        history_checkpoint = len(self.history)
         self.history.append({"role": "user", "content": full_message})
         had_tool_calls = False
 
-        while True:
-            if had_tool_calls:
-                _emit("✍️  [GenAI/ML Expert] Composing AI workflow recommendations...")
-            else:
-                _emit("🤖  [GenAI/ML Expert] Analyzing AI/ML opportunities...")
+        try:
+            while True:
+                if had_tool_calls:
+                    _emit("✍️  [GenAI/ML Expert] Composing AI workflow recommendations...")
+                else:
+                    _emit("🤖  [GenAI/ML Expert] Analyzing AI/ML opportunities...")
 
-            with self.client.messages.stream(
-                model=MODEL_NAME,
-                max_tokens=MAX_TOKENS,
-                system=GENAI_ML_SYSTEM_PROMPT,
-                tools=TOOLS,
-                messages=self.history,
-            ) as stream:
-                if text_stream_callback:
-                    for token in stream.text_stream:
-                        text_stream_callback(token)
-                response = stream.get_final_message()
+                with self.client.messages.stream(
+                    model=MODEL_NAME,
+                    max_tokens=MAX_TOKENS,
+                    system=GENAI_ML_SYSTEM_PROMPT,
+                    tools=TOOLS,
+                    messages=self.history,
+                ) as stream:
+                    if text_stream_callback:
+                        for token in stream.text_stream:
+                            text_stream_callback(token)
+                    response = stream.get_final_message()
 
-            if response.stop_reason == "tool_use":
-                had_tool_calls = True
-                self.history.append({
-                    "role": "assistant",
-                    "content": response.content,
-                })
-
-                tool_results = []
-                for block in response.content:
-                    if block.type != "tool_use":
-                        continue
-
-                    tool_name = block.name
-                    tool_input = block.input
-
-                    if tool_name == "search_aws_knowledge_base":
-                        query = tool_input.get("query", "")
-                        n = tool_input.get("n_results", 8)
-                        _emit(f"🔍  [GenAI/ML Expert] Searching KB ({n}): \"{query}\"")
-                    elif tool_name == "fetch_aws_page":
-                        url = tool_input.get("url", "")
-                        parsed = urlparse(url)
-                        display = parsed.netloc + parsed.path[:55]
-                        _emit(f"🌐  [GenAI/ML Expert] Fetching: {display}")
-
-                    result = execute_tool(tool_name, tool_input)
-
-                    if tool_name == "search_aws_knowledge_base":
-                        _emit(f"   {self._search_summary(result)}")
-                    elif tool_name == "fetch_aws_page":
-                        _emit(f"   {self._fetch_summary(result)}")
-
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": result,
+                if response.stop_reason == "tool_use":
+                    had_tool_calls = True
+                    self.history.append({
+                        "role": "assistant",
+                        "content": response.content,
                     })
 
-                self.history.append({
-                    "role": "user",
-                    "content": tool_results,
-                })
+                    tool_results = []
+                    for block in response.content:
+                        if block.type != "tool_use":
+                            continue
 
-            elif response.stop_reason == "end_turn":
-                response_text = ""
-                for block in response.content:
-                    if hasattr(block, "text"):
-                        response_text = block.text
-                        break
+                        tool_name = block.name
+                        tool_input = block.input
 
-                self.history.append({
-                    "role": "assistant",
-                    "content": response_text,
-                })
-                return response_text
+                        if tool_name == "search_aws_knowledge_base":
+                            query = tool_input.get("query", "")
+                            n = tool_input.get("n_results", 8)
+                            _emit(f"🔍  [GenAI/ML Expert] Searching KB ({n}): \"{query}\"")
+                        elif tool_name == "fetch_aws_page":
+                            url = tool_input.get("url", "")
+                            parsed = urlparse(url)
+                            display = parsed.netloc + parsed.path[:55]
+                            _emit(f"🌐  [GenAI/ML Expert] Fetching: {display}")
 
-            else:
-                logger.warning("Unexpected stop_reason: %s", response.stop_reason)
-                return "An unexpected error occurred in the GenAI/ML analysis."
+                        try:
+                            result = execute_tool(tool_name, tool_input)
+                        except Exception as tool_exc:
+                            logger.warning("Tool %s failed: %s", tool_name, tool_exc)
+                            result = f"Tool execution failed: {tool_exc}"
+
+                        if tool_name == "search_aws_knowledge_base":
+                            _emit(f"   {self._search_summary(result)}")
+                        elif tool_name == "fetch_aws_page":
+                            _emit(f"   {self._fetch_summary(result)}")
+
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": result,
+                        })
+
+                    self.history.append({
+                        "role": "user",
+                        "content": tool_results,
+                    })
+
+                elif response.stop_reason == "end_turn":
+                    response_text = ""
+                    for block in response.content:
+                        if hasattr(block, "text"):
+                            response_text = block.text
+                            break
+
+                    self.history.append({
+                        "role": "assistant",
+                        "content": response_text,
+                    })
+                    return response_text
+
+                else:
+                    logger.warning("Unexpected stop_reason: %s", response.stop_reason)
+                    return "An unexpected error occurred in the GenAI/ML analysis."
+
+        except Exception:
+            # Roll back any partial history appended during this turn so future
+            # requests are not sent a tool_use without a matching tool_result.
+            self.history = self.history[:history_checkpoint]
+            raise
 
     def clear_history(self):
         self.history = []
