@@ -24,9 +24,8 @@ RUN pip install --no-cache-dir -r requirements-api.txt
 # Copy project source
 COPY . .
 
-EXPOSE ${PORT:-8000}
+EXPOSE 8000
 
 # workers=1 is required — SessionStore is in-process memory.
-# Shell form is used so that $PORT is expanded at container start time.
-# Railway injects $PORT; falls back to 8000 for local docker run.
+# Railway injects $PORT at runtime; falls back to 8000 for local docker run.
 CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
