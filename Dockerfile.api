@@ -16,7 +16,7 @@ COPY requirements-api.txt .
 # Install CPU-only PyTorch first to avoid the ~2 GB GPU build that
 # sentence-transformers pulls in by default. This keeps the image under 2 GB.
 RUN pip install --no-cache-dir \
-    torch==2.3.1+cpu \
+    torch==2.5.1+cpu \
     --extra-index-url https://download.pytorch.org/whl/cpu
 
 RUN pip install --no-cache-dir -r requirements-api.txt
