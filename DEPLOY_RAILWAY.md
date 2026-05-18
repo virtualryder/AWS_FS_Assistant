@@ -62,15 +62,47 @@ Before starting, have these ready:
 4. Wait ~30 seconds for the database to be ready (green status dot)
 
 **Enable pgvector:**
-1. Click on the PostgreSQL service tile
-2. Go to the **Query** tab
-3. Run:
+
+Railway's UI does not have a reliable Query tab — use one of these methods instead:
+
+**Option A — Railway CLI (easiest, no extra tools needed):**
+```bash
+# Install Railway CLI if you don't have it
+npm install -g @railway/cli
+
+# Log in and link to your project
+railway login
+railway link   # select your project when prompted
+
+# Open a psql shell directly into the Railway PostgreSQL instance
+railway connect PostgreSQL
+```
+Once the `psql` prompt appears, run:
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+\q
+```
+
+**Option B — psql with the connection string:**
+1. Click the PostgreSQL service tile → **Variables** tab
+2. Copy the `DATABASE_URL` value (looks like `postgresql://postgres:xxxx@xxxx.railway.app:5432/railway`)
+3. In your local terminal (requires psql installed):
+   ```bash
+   psql "postgresql://postgres:xxxx@xxxx.railway.app:5432/railway"
+   ```
+4. Run:
    ```sql
    CREATE EXTENSION IF NOT EXISTS vector;
+   \q
    ```
-4. You should see: `CREATE EXTENSION` — this is required for the knowledge base
 
-> **Note:** If the Query tab is not available yet, wait another 30 seconds and refresh.
+**Option C — TablePlus / DBeaver (if you prefer a GUI):**
+1. Copy `DATABASE_URL` from the PostgreSQL Variables tab
+2. Open TablePlus or DBeaver → New Connection → PostgreSQL → paste the URL
+3. Run: `CREATE EXTENSION IF NOT EXISTS vector;`
+
+> You can verify it worked by running: `SELECT extversion FROM pg_extension WHERE extname = 'vector';`
+> You should see a version number like `0.7.0`.
 
 ---
 
