@@ -80,7 +80,7 @@ export default function CustomerPage() {
         />
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 bg-white px-6">
+        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -88,7 +88,7 @@ export default function CustomerPage() {
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? "border-aws-orange text-aws-orange"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               {tab.label}
@@ -97,7 +97,7 @@ export default function CustomerPage() {
         </div>
 
         {/* Tab content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-950">
           {activeTab === "conversations" && (
             <div className="h-full overflow-y-auto px-6 py-4">
               <ConversationList

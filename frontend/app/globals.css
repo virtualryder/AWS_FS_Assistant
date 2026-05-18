@@ -46,6 +46,11 @@ html {
   font-size: 0.88em;
 }
 
+.dark .prose code:not(pre code) {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
 .prose table {
   width: 100%;
   border-collapse: collapse;
@@ -60,17 +65,37 @@ html {
   text-align: left;
 }
 
+.dark .prose th {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
 .prose td {
   padding: 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
   vertical-align: top;
 }
 
+.dark .prose td {
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
 .prose tr:nth-child(even) td { background: #fafafa; }
+.dark .prose tr:nth-child(even) td { background: #1e293b; }
 
 .prose h1, .prose h2, .prose h3, .prose h4 {
   color: #0f172a;
   font-weight: 700;
+}
+
+.dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4 {
+  color: #f1f5f9;
+}
+
+.dark .prose p, .dark .prose li, .dark .prose strong {
+  color: #cbd5e1;
 }
 
 .prose blockquote {
@@ -78,6 +103,10 @@ html {
   padding-left: 1rem;
   color: #475569;
   font-style: italic;
+}
+
+.dark .prose blockquote {
+  color: #94a3b8;
 }
 
 /* ── Stage badge colors ────────────────────────────────────────────────────── */
@@ -88,6 +117,12 @@ html {
 .stage-closed             { background: #d1fae5; color: #065f46; }
 .stage-inactive           { background: #f1f5f9; color: #94a3b8; }
 
+.dark .stage-prospect     { background: #334155; color: #94a3b8; }
+.dark .stage-active       { background: #1e3a5f; color: #60a5fa; }
+.dark .stage-poc          { background: #431407; color: #fb923c; }
+.dark .stage-closed       { background: #064e3b; color: #34d399; }
+.dark .stage-inactive     { background: #1e293b; color: #64748b; }
+
 /* ── Chat bubbles ──────────────────────────────────────────────────────────── */
 
 .chat-user {
@@ -96,10 +131,20 @@ html {
   border-radius: 1rem 1rem 0.25rem 1rem;
 }
 
+.dark .chat-user {
+  background: #1e3a5f;
+  border-color: #2563eb;
+}
+
 .chat-assistant {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 0.25rem 1rem 1rem 1rem;
+}
+
+.dark .chat-assistant {
+  background: #1e293b;
+  border-color: #334155;
 }
 
 /* ── Status stream ticker ──────────────────────────────────────────────────── */
@@ -111,6 +156,10 @@ html {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.dark .status-ticker {
+  color: #94a3b8;
 }
 
 /* ── Sidebar ───────────────────────────────────────────────────────────────── */

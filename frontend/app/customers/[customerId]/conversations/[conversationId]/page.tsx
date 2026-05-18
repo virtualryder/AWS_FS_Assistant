@@ -93,28 +93,28 @@ export default function ConversationPage() {
         />
 
         {/* Conversation sub-header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <Link
               href={`/customers/${customerId}`}
-              className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0"
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
             >
               ← Back
             </Link>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm font-medium text-gray-700 truncate">
+            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
               {conversation.title}
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {documents.length > 0 && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 {documents.filter((d) => d.is_active).length}/{documents.length} docs
               </span>
             )}
             {confirmClear ? (
               <div className="flex items-center gap-1">
-                <span className="text-xs text-red-600">Clear history?</span>
+                <span className="text-xs text-red-600 dark:text-red-400">Clear history?</span>
                 <button
                   onClick={handleClear}
                   className="text-xs text-white bg-red-500 hover:bg-red-600 px-2 py-0.5 rounded"
@@ -123,7 +123,7 @@ export default function ConversationPage() {
                 </button>
                 <button
                   onClick={() => setConfirmClear(false)}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-1.5 py-0.5"
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-1.5 py-0.5"
                 >
                   No
                 </button>
@@ -131,8 +131,9 @@ export default function ConversationPage() {
             ) : (
               <button
                 onClick={() => setConfirmClear(true)}
-                className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1
-                  border border-gray-200 rounded hover:bg-gray-50"
+                className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-1
+                  border border-gray-200 dark:border-gray-700 rounded
+                  hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Clear
               </button>

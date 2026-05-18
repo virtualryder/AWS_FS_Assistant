@@ -79,16 +79,16 @@ export default function ChatWindow({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-950">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {messages.length === 0 && !isStreaming && (
           <div className="flex flex-col items-center justify-center h-full text-center py-20">
             <div className="text-4xl mb-4">🏦</div>
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
               AWS Financial Services Assistant
             </h2>
-            <p className="text-sm text-gray-500 max-w-md">
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
               Ask about AWS architecture design, compliance requirements (GLBA, PCI DSS,
               SOX, FFIEC), or GenAI/ML opportunities. Both agents will analyze your question.
             </p>
@@ -103,16 +103,18 @@ export default function ChatWindow({
               }`}
             >
               {m.role === "user" ? (
-                <p className="text-sm text-gray-800 whitespace-pre-wrap">{m.content}</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{m.content}</p>
               ) : (
                 <>
                   <MarkdownRenderer content={m.content} />
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                     <CopyButton text={m.content} label="Copy response" />
                     <button
                       onClick={() => downloadText("response.md", m.content)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium
-                        rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-600"
+                        rounded border border-gray-300 dark:border-gray-600
+                        bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
+                        text-gray-600 dark:text-gray-300"
                     >
                       ⬇ Download
                     </button>
@@ -136,7 +138,7 @@ export default function ChatWindow({
         )}
 
         {state.error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-400">
             Error: {state.error}
           </div>
         )}
@@ -145,7 +147,7 @@ export default function ChatWindow({
       </div>
 
       {/* Input area */}
-      <div className="border-t border-gray-200 bg-white px-6 py-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-4">
         {isStreaming && (
           <div className="mb-2">
             <StatusTicker message={state.status} visible />
@@ -160,7 +162,9 @@ export default function ChatWindow({
             placeholder="Ask about AWS architecture, compliance requirements, GenAI/ML opportunities…"
             rows={2}
             disabled={isStreaming}
-            className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-sm
+            className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-sm
+              bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+              placeholder-gray-400 dark:placeholder-gray-500
               focus:outline-none focus:ring-2 focus:ring-aws-orange resize-none
               disabled:opacity-60 disabled:cursor-not-allowed"
           />
@@ -183,7 +187,7 @@ export default function ChatWindow({
             </button>
           )}
         </div>
-        <p className="text-xs text-gray-400 mt-1.5">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
           Shift+Enter for new line · Enter to send
         </p>
       </div>

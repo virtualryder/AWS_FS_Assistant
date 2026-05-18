@@ -29,13 +29,13 @@ export default function CustomersPage() {
       />
 
       {/* Main area — no customer selected */}
-      <main className="flex-1 flex flex-col items-center justify-center bg-gray-50">
+      <main className="flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center max-w-lg px-6">
           <div className="text-6xl mb-6">🏦</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
             AWS Financial Services Assistant
           </h1>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             Presidio AWS Financial Services Practice — dual AI agents providing
             compliance-validated architecture design for GLBA, PCI DSS, SOX,
             FFIEC, and NIST AI RMF.
@@ -49,15 +49,15 @@ export default function CustomersPage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="bg-white rounded-xl border border-gray-200 p-4"
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4"
               >
                 <div className="text-2xl mb-2">{item.icon}</div>
-                <div className="font-semibold text-gray-800 mb-1">{item.label}</div>
-                <div className="text-gray-500 text-xs">{item.desc}</div>
+                <div className="font-semibold text-gray-800 dark:text-gray-200 mb-1">{item.label}</div>
+                <div className="text-gray-500 dark:text-gray-400 text-xs">{item.desc}</div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-6">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-6">
             Select or create a customer in the sidebar to get started.
           </p>
         </div>
