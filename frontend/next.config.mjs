@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   // Forward API requests to FastAPI backend during development
   async rewrites() {
     return [
