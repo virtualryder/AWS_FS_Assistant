@@ -96,19 +96,43 @@ async def chat(conv_id: str, body: ChatRequest):
     db_msgs = db.get_messages(conv_id)
     agent = session_store.get_or_create(conv_id, db_messages=db_msgs)
 
+    # On the first message of a new conversation, enrich customer_context with
+    # summaries of the customer's prior conversations so the agent has memory
+    # across sessions.
+    is_first_message = (len(db_msgs) == 0)
+    customer_context = body.customer_context
+    if is_first_message and conv.get("customer_id"):
+        prior = db.get_prior_conversation_summaries(
+            customer_id=conv["customer_id"],
+            exclude_conv_id=conv_id,
+            limit=5,
+        )
+        if prior:
+            lines = ["## Prior Conversations with This Customer\n"]
+            for s in prior:
+                lines.append(f"**{s['title']}**")
+                if s["first_user"]:
+                    lines.append(f"- Asked: {s['first_user']}")
+                if s["last_asst"]:
+                    lines.append(f"- Summary: {s['last_asst'][:400]}")
+                lines.append("")
+            prior_block = "\n".join(lines)
+            customer_context = (
+                prior_block + "\n\n" + customer_context
+                if customer_context.strip()
+                else prior_block
+            )
+
     loop = asyncio.get_event_loop()
     queue: asyncio.Queue = asyncio.Queue()
 
     runner = build_agent_runner(
         agent=agent,
         user_message=user_message,
-        customer_context=body.customer_context,
+        customer_context=customer_context,
         queue=queue,
         loop=loop,
     )
-
-    # Track whether we need to auto-title this conversation
-    is_first_message = (len(db_msgs) == 0)
 
     async def event_generator():
         get_executor().submit(runner)

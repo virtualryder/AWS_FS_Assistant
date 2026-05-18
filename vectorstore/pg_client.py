@@ -544,6 +544,67 @@ def save_messages_batch(rows: list[dict]) -> None:
     conn.commit()
 
 
+def get_prior_conversation_summaries(
+    customer_id: str,
+    exclude_conv_id: str,
+    limit: int = 5,
+) -> list[dict]:
+    """
+    Return lightweight summaries of a customer's last `limit` conversations
+    (excluding the current one).
+
+    Each dict has:
+        title       — conversation title
+        first_user  — first user message (truncated to 300 chars)
+        last_asst   — last assistant response (truncated to 600 chars)
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        # Fetch the IDs + titles of the last N conversations (excluding current)
+        cur.execute(
+            """
+            SELECT id, title FROM conversations
+            WHERE customer_id = %s AND id != %s
+            ORDER BY updated_at DESC
+            LIMIT %s
+            """,
+            (customer_id, exclude_conv_id, limit),
+        )
+        convs = cur.fetchall()
+
+    summaries = []
+    for conv_id, title in convs:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT role, display_content FROM messages
+                WHERE conversation_id = %s
+                  AND is_display_turn = TRUE
+                  AND display_content IS NOT NULL
+                ORDER BY turn_index ASC
+                """,
+                (conv_id,),
+            )
+            rows = cur.fetchall()
+
+        if not rows:
+            continue
+
+        first_user = next((r[1] for r in rows if r[0] == "user"), None)
+        last_asst = next((r[1] for r in reversed(rows) if r[0] == "assistant"), None)
+
+        if not first_user and not last_asst:
+            continue
+
+        summaries.append({
+            "title":      title or "Untitled",
+            "first_user": (first_user or "")[:300],
+            "last_asst":  (last_asst or "")[:600],
+        })
+
+    return summaries
+
+
 def get_messages(conv_id: str) -> list[dict]:
     """
     Return all messages for a conversation ordered by turn_index.
