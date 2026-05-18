@@ -425,6 +425,14 @@ class GenAIMLAgent:
                     if text_stream_callback:
                         for token in stream.text_stream:
                             text_stream_callback(token)
+                    else:
+                        # Phase 2 runs without forwarding tokens — emit rolling
+                        # progress so the user knows Claude is actively writing.
+                        token_count = 0
+                        for token in stream.text_stream:
+                            token_count += 1
+                            if token_count % 80 == 0:
+                                _emit(f"✍️  [GenAI/ML Expert] Writing analysis… ({token_count} tokens)")
                     response = stream.get_final_message()
 
                 if response.stop_reason == "tool_use":

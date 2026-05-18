@@ -165,6 +165,7 @@ class FinServChatAgent:
                 status_callback(msg)
 
         _emit("💬  Preparing direct response...")
+        _emit("⏳  Waiting for Claude to begin streaming…")
 
         if customer_context and customer_context.strip():
             full_message = (
@@ -176,14 +177,18 @@ class FinServChatAgent:
 
         messages = self.history[:-1] + [{"role": "user", "content": full_message}]
 
+        first_token_received = False
         with self.client.messages.stream(
             model=MODEL_NAME,
             max_tokens=4096,
             system=DIRECT_SYSTEM,
             messages=messages,
         ) as stream:
-            if text_stream_callback:
-                for token in stream.text_stream:
+            for token in stream.text_stream:
+                if not first_token_received:
+                    _emit("📝  Streaming response…")
+                    first_token_received = True
+                if text_stream_callback:
                     text_stream_callback(token)
             response = stream.get_final_message()
 
@@ -238,6 +243,7 @@ class FinServChatAgent:
 
         # ── Phase 3: Synthesis ────────────────────────────────────────────────
         _emit("✨  Synthesizing combined response...")
+        _emit("⏳  Waiting for Claude to begin streaming…")
 
         combination_prompt = f"""\
 Below are two expert analyses of the same customer question. Please synthesize them
@@ -255,14 +261,18 @@ into a single cohesive response following the instructions in your system prompt
 Customer Question (for reference): {user_message}
 """
 
+        first_token_received = False
         with self.client.messages.stream(
             model=MODEL_NAME,
             max_tokens=MAX_TOKENS,
             system=COMBINATION_SYSTEM,
             messages=[{"role": "user", "content": combination_prompt}],
         ) as stream:
-            if text_stream_callback:
-                for token in stream.text_stream:
+            for token in stream.text_stream:
+                if not first_token_received:
+                    _emit("📝  Streaming response…")
+                    first_token_received = True
+                if text_stream_callback:
                     text_stream_callback(token)
             response = stream.get_final_message()
 
