@@ -322,93 +322,63 @@ python -m pytest tests/test_build_validation.py -v
 
 ## Railway Deployment
 
-Railway handles PostgreSQL, environment injection, and deployment automatically. The app runs as **two Railway services** from the same GitHub repository:
+> **Full step-by-step guide with infrastructure setup, troubleshooting, and resource sizing: [`DEPLOY_RAILWAY.md`](DEPLOY_RAILWAY.md)**
 
-| Service | Source | Purpose |
-|---------|--------|---------|
-| **API** | Repo root, `Dockerfile.api` | FastAPI backend — agents, DB, SSE streaming |
-| **Frontend** | `frontend/` subdirectory | Next.js UI |
-| **PostgreSQL** | Railway plugin | pgvector knowledge base + customer data |
+The app deploys as **three Railway resources** inside one project:
 
-### Step 1 — Create a Railway account
+```
+Railway Project
+  ├─ PostgreSQL plugin       ← pgvector KB + all app data
+  ├─ Service: API            ← FastAPI (Dockerfile.api, repo root)
+  └─ Service: Frontend       ← Next.js (frontend/ subdirectory)
+```
 
-Go to [railway.app](https://railway.app) and sign up.
+**Deployment order:** PostgreSQL → API → Frontend → Update CORS
 
-### Step 2 — Create a new project
+### Environment Variables
 
-Dashboard → New Project → Empty Project.
+**API service** (set in Railway → Variables):
 
-### Step 3 — Add PostgreSQL
+| Variable | Value |
+|----------|-------|
+| `ANTHROPIC_API_KEY` | `sk-ant-api03-...` |
+| `TAVILY_API_KEY` | `tvly-...` |
+| `DATABASE_URL` | Link from PostgreSQL plugin (do not type manually) |
 
-In your project:
-1. New → Database → Add PostgreSQL
-2. Railway creates `DATABASE_URL` automatically — **do not add it manually**
-3. Enable pgvector: open the PostgreSQL service → Query tab, run:
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS vector;
-   ```
+**Frontend service:**
 
-### Step 4 — Deploy the API service
+| Variable | Value |
+|----------|-------|
+| `NEXT_PUBLIC_API_URL` | `https://your-api-service.up.railway.app` (no trailing slash) |
 
-1. New → GitHub Repo → authorize Railway → select `AWS_FS_Assistant`
-2. Railway auto-detects `Dockerfile.api` from `railway.toml`
-3. In the service → Variables tab, add:
-   ```
-   ANTHROPIC_API_KEY    sk-ant-api03-your-key-here
-   TAVILY_API_KEY       tvly-your-key-here
-   ```
-4. Link the PostgreSQL plugin to this service (Variables → Add Reference → PostgreSQL → `DATABASE_URL`). This auto-injects `DATABASE_URL`.
-5. In Settings → Generate Domain — note the URL (e.g. `https://aws-finserv-api.up.railway.app`)
+### After Deploying Both Services — Update CORS
 
-> The start command from `railway.toml` runs `startup_ingest.py` in the background before starting uvicorn, so documentation indexing begins automatically on first boot.
-
-### Step 5 — Deploy the frontend service
-
-1. In your project → New → GitHub Repo → same repo
-2. In the service → Settings → **Root Directory** = `frontend`
-3. Railway detects Next.js via Nixpacks and uses `frontend/railway.toml`
-4. In Variables tab, add:
-   ```
-   NEXT_PUBLIC_API_URL    https://aws-finserv-api.up.railway.app
-   ```
-   (replace with the actual API service URL from Step 4)
-5. Settings → Generate Domain for the frontend (e.g. `https://aws-finserv.up.railway.app`)
-
-### Step 6 — Update API CORS
-
-Open `api/main.py` and add your frontend Railway domain to `allow_origins`:
+Add your frontend Railway domain to `api/main.py`:
 
 ```python
 allow_origins=[
     "http://localhost:3000",
-    "https://aws-finserv.up.railway.app",  # ← add your frontend URL
+    "https://your-frontend.up.railway.app",  # ← add this
 ],
 ```
 
-Commit and push — Railway redeploys automatically.
+Commit and push — Railway redeploys the API automatically.
 
-### Step 7 — Verify deployment
+### Verify
 
-1. Open your frontend URL → you should see the customer list page
-2. Check the API: `https://your-api-url.up.railway.app/health` should return `{"status":"ok"}`
-3. Check KB status: `https://your-api-url.up.railway.app/api/knowledge-base/status`
+```
+GET https://your-api.up.railway.app/health
+→ {"status": "ok", "sessions": 0}
 
-### Railway Resource Requirements
+GET https://your-api.up.railway.app/api/knowledge-base/status
+→ {"chunk_count": ..., "ingest_running": true/false, ...}
+```
 
-| Service | Plan | RAM | Notes |
-|---------|------|-----|-------|
-| **API** | Hobby (1 GB) minimum | ~500 MB | Embedding model loads ~90 MB; agents need headroom |
-| **Frontend** | Starter (512 MB) | ~128 MB | Static Next.js build |
-| **PostgreSQL** | Any | — | Railway plugin; pgvector HNSW index is memory-efficient |
+### Weekly Documentation Refresh (Cron)
 
-### Weekly Documentation Refresh (Railway Cron)
-
-Set up automatic re-indexing of stale AWS documentation:
-
-1. Railway → your project → New → Cron Job
-2. Connect to your **API service**
-3. Command: `python refresh_ingest.py`
-4. Schedule: `0 3 * * 0` (Sunday 3:00 AM UTC)
+Railway → project → New → Cron Job → connect to API service:
+- Command: `python refresh_ingest.py`
+- Schedule: `0 3 * * 0` (Sunday 3 AM UTC)
 
 ---
 
