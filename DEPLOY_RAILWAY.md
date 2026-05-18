@@ -186,7 +186,7 @@ If you get a 502 or timeout, check the **Logs** tab — the most common causes a
 3. **Important:** Under **Root Directory**, type `frontend`
 4. Click **Deploy Now**
 
-Railway will detect Next.js via Nixpacks, run `npm install && npm run build`, then `npm run start`.
+Railway detects `frontend/railway.toml` which specifies `builder = "dockerfile"` and uses `frontend/Dockerfile` to build. The Dockerfile produces a Next.js standalone server that reads `PORT` from the environment automatically.
 
 ### 4b — Set the API URL variable
 
@@ -302,7 +302,7 @@ Check **Logs** tab for the specific error:
 |---------|-----|
 | Browser console: `CORS error` | Complete Step 5 — add frontend URL to `allow_origins` in `api/main.py` |
 | All API calls return 502 | API service is down — check API service Logs tab |
-| `NEXT_PUBLIC_API_URL` not working | Make sure there's no trailing slash; redeploy frontend after setting |
+| `NEXT_PUBLIC_API_URL` not working | No trailing slash; must be set **before** the build runs (baked in at build time for client components) — redeploy frontend after setting |
 | Knowledge base shows 0 chunks | Normal on first deploy — `startup_ingest.py` runs in background; wait 15-20 min |
 
 ### Railway health check keeps failing
@@ -355,8 +355,8 @@ Project structure on Railway:
     │    Domain:            https://xxx-api.up.railway.app
     └─ Service: frontend
          Source:            github/virtualryder/AWS_FS_Assistant  (root = frontend/)
-         Build:             Nixpacks (auto-detects Next.js)
-         Start:             npm run start
+         Build:             frontend/Dockerfile (standalone Next.js)
+         Start:             node server.js  (reads PORT env var automatically)
          Vars:              NEXT_PUBLIC_API_URL = https://xxx-api.up.railway.app
          Domain:            https://xxx.up.railway.app
 ```

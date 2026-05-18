@@ -119,7 +119,8 @@ AWS Financial Services Assistant/
 ├── requirements.txt                # Python deps for Streamlit app
 ├── requirements-api.txt            # Python deps for FastAPI backend
 ├── railway.toml                    # Railway config — FastAPI backend service
-├── Dockerfile.api                  # Docker image for FastAPI backend
+├── Dockerfile.api                  # Docker image for FastAPI backend (CPU-only PyTorch)
+├── start.sh                        # Entrypoint: startup_ingest.py & → exec uvicorn (PID 1)
 ├── docker-compose.yml              # Local dev: API on :8000 + frontend on :3000
 ├── startup_ingest.py               # Background indexer on first boot
 ├── refresh_ingest.py               # Weekly stale-content refresh
@@ -138,9 +139,10 @@ AWS Financial Services Assistant/
 │
 ├── frontend/                       # Next.js 14 App Router frontend
 │   ├── package.json
-│   ├── next.config.ts              # Rewrites /api/* → FastAPI backend
+│   ├── Dockerfile                  # Multi-stage build; standalone Next.js server
+│   ├── next.config.mjs             # Rewrites /api/* → FastAPI backend; standalone output
 │   ├── tailwind.config.ts          # AWS orange + Presidio blue theme
-│   ├── railway.toml                # Railway config — frontend service
+│   ├── railway.toml                # Railway config — frontend service (dockerfile builder)
 │   ├── app/
 │   │   ├── layout.tsx              # Root layout with Inter font
 │   │   ├── globals.css             # Tailwind base + custom styles
@@ -481,7 +483,7 @@ python -m ingestion.ingest_pipeline --all --max-pages 20
 | Web search | Tavily API (discovery briefs) |
 | Web scraping | requests + BeautifulSoup4 + markdownify |
 | Doc parsing | pdfplumber (PDF), python-docx (Word) |
-| Deployment | Railway — API service (Dockerfile) + Frontend service (Nixpacks) |
+| Deployment | Railway — API service (Dockerfile.api + start.sh) + Frontend service (Dockerfile) |
 | Legacy UI | Streamlit (`app.py` — still runnable for local use) |
 
 ---
