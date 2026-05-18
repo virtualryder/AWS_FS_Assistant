@@ -14,7 +14,6 @@ FROM node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 # Copy standalone server and required static files
@@ -22,8 +21,8 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-EXPOSE 3000
+EXPOSE 8080
 
 # Next.js standalone server reads PORT env var automatically.
-# Railway overrides PORT at runtime if it assigns a different port.
+# Railway injects PORT=8080 at runtime; domain must target the same port.
 CMD ["node", "server.js"]
