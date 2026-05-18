@@ -302,32 +302,44 @@ Customer Question (for reference): {user_message}
             if status_callback:
                 status_callback(msg)
 
-        # Record user turn in high-level history
+        # Checkpoint all three histories so any exception can be rolled back
+        orch_checkpoint  = len(self.history)
+        aws_checkpoint   = len(self._aws_agent.history)
+        genai_checkpoint = len(self._genai_agent.history)
+
         self.history.append({"role": "user", "content": user_message})
 
-        # Route: full analysis or quick answer?
-        _emit("🔀  Routing question...")
-        mode = self._classify_message(user_message)
+        try:
+            # Route: full analysis or quick answer?
+            _emit("🔀  Routing question...")
+            mode = self._classify_message(user_message)
 
-        if mode == "A":
-            response_text = self._full_analysis(
-                user_message, customer_context, status_callback, text_stream_callback
-            )
-        else:
-            response_text = self._quick_answer(
-                user_message, customer_context, status_callback, text_stream_callback
-            )
+            if mode == "A":
+                response_text = self._full_analysis(
+                    user_message, customer_context, status_callback, text_stream_callback
+                )
+            else:
+                response_text = self._quick_answer(
+                    user_message, customer_context, status_callback, text_stream_callback
+                )
 
-        self.history.append({"role": "assistant", "content": response_text})
+            self.history.append({"role": "assistant", "content": response_text})
 
-        # Keep sub-agent histories in sync: if we ran full analysis, their histories
-        # are already updated. For quick answers, sync a summary.
-        if mode == "B":
-            summary = f"[Quick answer provided for: {user_message[:100]}]"
-            self._aws_agent.history.append({"role": "user", "content": summary})
-            self._aws_agent.history.append({"role": "assistant", "content": response_text[:500]})
-            self._genai_agent.history.append({"role": "user", "content": summary})
-            self._genai_agent.history.append({"role": "assistant", "content": response_text[:500]})
+            # Keep sub-agent histories in sync: if we ran full analysis, their histories
+            # are already updated. For quick answers, sync a summary.
+            if mode == "B":
+                summary = f"[Quick answer provided for: {user_message[:100]}]"
+                self._aws_agent.history.append({"role": "user", "content": summary})
+                self._aws_agent.history.append({"role": "assistant", "content": response_text[:500]})
+                self._genai_agent.history.append({"role": "user", "content": summary})
+                self._genai_agent.history.append({"role": "assistant", "content": response_text[:500]})
+
+        except Exception:
+            # Roll back all three histories so no corrupt/partial turn is left behind
+            self.history           = self.history[:orch_checkpoint]
+            self._aws_agent.history   = self._aws_agent.history[:aws_checkpoint]
+            self._genai_agent.history = self._genai_agent.history[:genai_checkpoint]
+            raise
 
         return response_text
 
