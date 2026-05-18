@@ -26,6 +26,8 @@ COPY . .
 
 EXPOSE 8000
 
-# workers=1 is required — SessionStore is in-process memory.
-# Railway injects $PORT at runtime; falls back to 8000 for local docker run.
-CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
+# Copy and use start.sh as the entrypoint so uvicorn runs as PID 1.
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]

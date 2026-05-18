@@ -11,10 +11,9 @@
 dockerfilePath = "Dockerfile.api"
 
 [deploy]
-# startup_ingest.py runs in the background so the API is available immediately.
-# On first boot it indexes all primary AWS services (~15-20 min).
-# On subsequent restarts it exits in <1 second (DB already populated).
-startCommand = "python startup_ingest.py & uvicorn api.main:app --host 0.0.0.0 --port $PORT --workers 1"
+# start.sh runs startup_ingest.py in the background then execs uvicorn as PID 1.
+# Using exec ensures Railway signals and health checks are handled correctly.
+startCommand = "sh /app/start.sh"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
