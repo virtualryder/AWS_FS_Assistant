@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Local data — do not bake into the image
+chroma_store/
+docs/
+*.db
+*.sqlite
+
+# Dev / test artifacts
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Node (frontend is a separate service)
+frontend/node_modules/
+frontend/.next/
+
+# Environment files — never bake secrets into image
+.env
+.env.*
+!.env.example
+
+# Office docs
+*.docx
+*.xlsx
+*.pptx
+
+# Uploaded/generated docs
+AWS_Documentation_Chatbot.docx
+Chatgpt-recommendation.docx
