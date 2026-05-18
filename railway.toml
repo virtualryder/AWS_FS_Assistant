@@ -8,7 +8,7 @@
 # See README.md → Railway Deployment for step-by-step instructions.
 
 [build]
-dockerfile = "Dockerfile.api"
+dockerfilePath = "Dockerfile.api"
 
 [deploy]
 # startup_ingest.py runs in the background so the API is available immediately.
