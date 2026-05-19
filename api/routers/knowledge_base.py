@@ -23,18 +23,77 @@ router = APIRouter(prefix="/knowledge-base", tags=["knowledge-base"])
 
 _ingest_running = False
 _ingest_progress: dict[str, Any] = {
-    "current_service": None,
+    "phase": None,           # "fetching" | "chunking" | "upserting" | "completed" | "skipped"
+    "current_service": None, # display name of current service
     "services_done": 0,
     "services_total": 0,
     "started_at": None,
+    # current-service detail
+    "current_pages": 0,
+    "current_chunks": 0,
+    "current_batch": 0,
+    "current_total_batches": 0,
+    # run-level totals
+    "pages_this_run": 0,
+    "chunks_this_run": 0,
+    "services_completed": [],  # list of completed service names
 }
 
 
 def _progress_callback(message: str, current: int, total: int) -> None:
+    """Parse structured progress messages from ingest_pipeline and update state."""
     global _ingest_progress
-    _ingest_progress["current_service"] = message
-    _ingest_progress["services_done"] = current
-    _ingest_progress["services_total"] = total
+    p = _ingest_progress
+    p["services_done"] = current
+    p["services_total"] = total
+
+    parts = message.split(":", 1)
+    cmd = parts[0]
+    rest = parts[1] if len(parts) > 1 else ""
+
+    if cmd == "fetch":
+        p["phase"] = "fetching"
+        p["current_service"] = rest
+        p["current_pages"] = 0
+        p["current_chunks"] = 0
+        p["current_batch"] = 0
+        p["current_total_batches"] = 0
+
+    elif cmd == "chunk":
+        sub = rest.split(":", 1)
+        p["phase"] = "chunking"
+        p["current_service"] = sub[0]
+        p["current_pages"] = int(sub[1]) if len(sub) > 1 else 0
+
+    elif cmd == "upsert":
+        sub = rest.split(":")
+        # upsert:{name}:{batch_idx}:{total_batches}:{total_chunks}
+        p["phase"] = "upserting"
+        p["current_service"] = sub[0] if len(sub) > 0 else rest
+        p["current_batch"] = int(sub[1]) if len(sub) > 1 else 0
+        p["current_total_batches"] = int(sub[2]) if len(sub) > 2 else 0
+        p["current_chunks"] = int(sub[3]) if len(sub) > 3 else 0
+
+    elif cmd == "done":
+        sub = rest.split(":")
+        name = sub[0] if len(sub) > 0 else rest
+        pages = int(sub[1]) if len(sub) > 1 else 0
+        chunks = int(sub[2]) if len(sub) > 2 else 0
+        p["phase"] = "completed"
+        p["current_service"] = name
+        p["pages_this_run"] += pages
+        p["chunks_this_run"] += chunks
+        if name not in p["services_completed"]:
+            p["services_completed"].append(name)
+
+    elif cmd == "skip":
+        p["phase"] = "skipped"
+        p["current_service"] = rest
+
+    else:
+        # Legacy / fallback
+        p["phase"] = "fetching"
+        p["current_service"] = message
 
 
 def _build_all_seeds(manifest_sources: dict) -> list[dict]:
@@ -94,11 +153,30 @@ async def get_status():
 
         progress = None
         if _ingest_running:
+            started_at = _ingest_progress.get("started_at")
+            elapsed_seconds: int | None = None
+            if started_at:
+                try:
+                    elapsed_seconds = int(
+                        (datetime.now() - datetime.fromisoformat(started_at)).total_seconds()
+                    )
+                except Exception:
+                    pass
+
             progress = {
+                "phase": _ingest_progress.get("phase"),
                 "current_service": _ingest_progress.get("current_service"),
                 "services_done": _ingest_progress.get("services_done", 0),
                 "services_total": _ingest_progress.get("services_total", 0),
-                "started_at": _ingest_progress.get("started_at"),
+                "current_pages": _ingest_progress.get("current_pages", 0),
+                "current_chunks": _ingest_progress.get("current_chunks", 0),
+                "current_batch": _ingest_progress.get("current_batch", 0),
+                "current_total_batches": _ingest_progress.get("current_total_batches", 0),
+                "pages_this_run": _ingest_progress.get("pages_this_run", 0),
+                "chunks_this_run": _ingest_progress.get("chunks_this_run", 0),
+                "services_completed": _ingest_progress.get("services_completed", []),
+                "started_at": started_at,
+                "elapsed_seconds": elapsed_seconds,
             }
 
         return {
@@ -144,10 +222,18 @@ def _run_ingest():
     global _ingest_running, _ingest_progress
     _ingest_running = True
     _ingest_progress = {
+        "phase": "starting",
         "current_service": "Starting…",
         "services_done": 0,
         "services_total": 0,
         "started_at": datetime.now().isoformat(),
+        "current_pages": 0,
+        "current_chunks": 0,
+        "current_batch": 0,
+        "current_total_batches": 0,
+        "pages_this_run": 0,
+        "chunks_this_run": 0,
+        "services_completed": [],
     }
     try:
         from scraper.aws_doc_urls import PRIMARY_SEED_KEYS

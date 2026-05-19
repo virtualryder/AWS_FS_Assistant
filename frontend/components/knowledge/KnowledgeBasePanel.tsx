@@ -132,9 +132,23 @@ export default function KnowledgeBasePanel({ status, onIngestTriggered }: Props)
   const tiers = Object.keys(groups).map(Number).sort((a, b) => a - b);
 
   // Which service name is currently being indexed?
-  const activeServiceName = progress?.current_service?.startsWith("Fetching:")
-    ? progress.current_service.replace("Fetching:", "").trim()
-    : null;
+  const activeServiceName = progress?.current_service ?? null;
+
+  function formatElapsed(secs: number | null | undefined): string {
+    if (!secs) return "0s";
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  }
+
+  const PHASE_LABEL: Record<string, string> = {
+    starting: "Starting up…",
+    fetching: "Scraping pages",
+    chunking: "Splitting into chunks",
+    upserting: "Writing to database",
+    completed: "Service complete",
+    skipped: "Skipped (no pages found)",
+  };
 
   async function handleTrigger() {
     setTriggering(true);
@@ -183,26 +197,92 @@ export default function KnowledgeBasePanel({ status, onIngestTriggered }: Props)
         </div>
       )}
 
-      {/* Live progress bar */}
+      {/* Live progress panel */}
       {isIndexing && progress && (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-yellow-700 dark:text-yellow-400 font-medium">
-              {progress.current_service ?? "Indexing…"}
+        <div className="rounded-lg border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950/30 p-3 space-y-2.5">
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-yellow-800 dark:text-yellow-300">
+              Indexing in progress
             </span>
-            <span className="text-gray-500 dark:text-gray-400">
-              {progress.services_done}/{progress.services_total} services
+            <span className="text-[11px] text-yellow-700 dark:text-yellow-400">
+              Elapsed: {formatElapsed(progress.elapsed_seconds)}
             </span>
           </div>
-          <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-yellow-400 rounded-full transition-all duration-500"
-              style={{
-                width: progress.services_total > 0
+
+          {/* Progress bar */}
+          <div>
+            <div className="flex items-center justify-between text-[11px] mb-1">
+              <span className="text-yellow-700 dark:text-yellow-400">
+                {progress.services_done}/{progress.services_total} services
+              </span>
+              <span className="text-yellow-700 dark:text-yellow-400">
+                {progress.services_total > 0
                   ? `${Math.round((progress.services_done / progress.services_total) * 100)}%`
-                  : "2%",
-              }}
-            />
+                  : "0%"}
+              </span>
+            </div>
+            <div className="h-2 w-full bg-yellow-200 dark:bg-yellow-900 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-yellow-400 dark:bg-yellow-500 rounded-full transition-all duration-500"
+                style={{
+                  width: progress.services_total > 0
+                    ? `${Math.max(2, Math.round((progress.services_done / progress.services_total) * 100))}%`
+                    : "2%",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Current service + phase */}
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <div className="text-yellow-600 dark:text-yellow-500 mb-0.5">Current service</div>
+              <div className="font-medium text-yellow-900 dark:text-yellow-200 truncate">
+                {progress.current_service ?? "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-yellow-600 dark:text-yellow-500 mb-0.5">Phase</div>
+              <div className="font-medium text-yellow-900 dark:text-yellow-200">
+                {PHASE_LABEL[progress.phase ?? ""] ?? progress.phase ?? "—"}
+              </div>
+            </div>
+          </div>
+
+          {/* Phase-specific detail */}
+          {progress.phase === "upserting" && progress.current_total_batches > 0 && (
+            <div className="text-[11px] text-yellow-700 dark:text-yellow-400">
+              Writing batch {progress.current_batch}/{progress.current_total_batches}
+              {" · "}{progress.current_chunks.toLocaleString()} chunks total
+            </div>
+          )}
+          {progress.phase === "chunking" && progress.current_pages > 0 && (
+            <div className="text-[11px] text-yellow-700 dark:text-yellow-400">
+              {progress.current_pages} pages scraped — splitting into chunks…
+            </div>
+          )}
+
+          {/* Run totals */}
+          <div className="flex gap-4 pt-1 border-t border-yellow-200 dark:border-yellow-800 text-[11px]">
+            <div>
+              <span className="text-yellow-600 dark:text-yellow-500">Pages this run: </span>
+              <span className="font-medium text-yellow-900 dark:text-yellow-200">
+                {progress.pages_this_run.toLocaleString()}
+              </span>
+            </div>
+            <div>
+              <span className="text-yellow-600 dark:text-yellow-500">Chunks added: </span>
+              <span className="font-medium text-yellow-900 dark:text-yellow-200">
+                {progress.chunks_this_run.toLocaleString()}
+              </span>
+            </div>
+            <div>
+              <span className="text-yellow-600 dark:text-yellow-500">Done: </span>
+              <span className="font-medium text-yellow-900 dark:text-yellow-200">
+                {progress.services_completed.length}
+              </span>
+            </div>
           </div>
         </div>
       )}

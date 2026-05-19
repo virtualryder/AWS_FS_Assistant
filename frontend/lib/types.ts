@@ -54,10 +54,19 @@ export interface SeedEntry {
 }
 
 export interface IngestProgress {
+  phase: "starting" | "fetching" | "chunking" | "upserting" | "completed" | "skipped" | null;
   current_service: string | null;
   services_done: number;
   services_total: number;
+  current_pages: number;
+  current_chunks: number;
+  current_batch: number;
+  current_total_batches: number;
+  pages_this_run: number;
+  chunks_this_run: number;
+  services_completed: string[];
   started_at: string | null;
+  elapsed_seconds: number | null;
 }
 
 export interface KnowledgeBaseStatus {

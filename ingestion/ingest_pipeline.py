@@ -106,7 +106,7 @@ def run_ingestion(
         tier = seed_info.get("tier", 1)
 
         if progress_callback:
-            progress_callback(f"Fetching: {name}", i, total)
+            progress_callback(f"fetch:{name}", i, total)
 
         logger.info("[%d/%d] Crawling: %s", i + 1, total, url)
         crawl_start = datetime.now().isoformat()
@@ -123,9 +123,14 @@ def run_ingestion(
         if not docs:
             logger.warning("No pages retrieved for '%s'", key)
             skipped.append(key)
+            if progress_callback:
+                progress_callback(f"skip:{name}", i + 1, total)
             continue
 
         pages_scraped += len(docs)
+
+        if progress_callback:
+            progress_callback(f"chunk:{name}:{len(docs)}", i, total)
 
         # Chunk
         chunks = chunk_documents(docs)
@@ -135,13 +140,24 @@ def run_ingestion(
         for c in chunks:
             c["metadata"]["tier"] = tier
 
+        total_batches = max(1, (len(chunks) + UPSERT_BATCH_SIZE - 1) // UPSERT_BATCH_SIZE)
+
         # Upsert in batches
-        for batch_start in range(0, len(chunks), UPSERT_BATCH_SIZE):
+        for batch_idx, batch_start in enumerate(range(0, len(chunks), UPSERT_BATCH_SIZE)):
             batch = chunks[batch_start:batch_start + UPSERT_BATCH_SIZE]
             upsert_chunks(batch)
+            if progress_callback:
+                progress_callback(
+                    f"upsert:{name}:{batch_idx + 1}:{total_batches}:{len(chunks)}",
+                    i,
+                    total,
+                )
 
         chunks_indexed += len(chunks)
         logger.info("  Indexed %d chunks for '%s'", len(chunks), name)
+
+        if progress_callback:
+            progress_callback(f"done:{name}:{len(docs)}:{len(chunks)}", i + 1, total)
 
         # Update manifest entry for this source
         manifest["sources"][key] = {
