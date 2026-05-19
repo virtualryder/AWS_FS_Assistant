@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/lib/theme";
 export const metadata: Metadata = {
   title: "AWS Financial Services Assistant",
   description:
-    "Presidio AWS Financial Services Practice — Compliance-Validated Architecture Design " +
+    "AWS Financial Services Assistant — Compliance-Validated Architecture Design " +
     "powered by dual AI agents (AWS Architect + GenAI/ML Expert).",
   icons: { icon: "/favicon.ico" },
 };

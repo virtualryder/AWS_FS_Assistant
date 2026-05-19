@@ -13,7 +13,7 @@ const config: Config = {
         aws: {
           orange:      "#FF9900",
           "orange-dk": "#E68A00",
-          // Presidio blue
+          // Brand blue
           blue:        "#003087",
           "blue-lt":   "#0052CC",
         },

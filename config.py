@@ -41,4 +41,4 @@ MIN_CONTENT_LENGTH = 300  # skip pages shorter than this
 
 # Application branding
 APP_NAME = "AWS Financial Services Assistant"
-APP_SUBTITLE = "Powered by Presidio · Compliance-Validated Architecture Design"
+APP_SUBTITLE = "AWS Financial Services Assistant · Compliance-Validated Architecture Design"

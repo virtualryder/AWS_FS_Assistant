@@ -39,7 +39,7 @@ export default function CustomersPage() {
               AWS Financial Services Assistant
             </h1>
             <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
-              Presidio AWS Financial Services Practice — dual AI agents providing
+              AWS Financial Services Assistant — dual AI agents providing
               compliance-validated architecture design for GLBA, PCI DSS, SOX,
               FFIEC, and NIST AI RMF.
             </p>

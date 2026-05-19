@@ -645,6 +645,9 @@ PRIMARY_SEED_KEYS: list[str] = [
     "cloudformation", "cloudwatch", "secrets_manager",
     # Organizations & Governance
     "organizations", "control_tower",
+    # AWS Guidance & Financial Services (added to default index)
+    "prescriptive_guidance", "solutions_library", "reference_architecture",
+    "financial_services",
 ]
 
 # Available for optional manual ingestion via the sidebar.

@@ -32,7 +32,7 @@ export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props
             <div className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
               AWS Financial Services
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Presidio Practice</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Financial Services Assistant</div>
           </div>
         </div>
         <button

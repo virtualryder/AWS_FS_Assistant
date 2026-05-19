@@ -1,6 +1,6 @@
 """
 AWS Financial Services Assistant — Streamlit Application
-Presidio AWS Financial Services Practice
+AWS Financial Services Assistant
 
 Powered by two specialized AI agents:
   1. AWS Architect Agent  — compliance-validated architecture design
@@ -318,7 +318,7 @@ def _select_customer(customer_id: str | None) -> None:
 
 with st.sidebar:
     st.markdown("## 🏦 FinServ Assistant")
-    st.caption("Presidio · Compliance-Validated AWS Architecture")
+    st.caption("AWS Financial Services Assistant · Compliance-Validated Architecture")
     st.divider()
 
     # ── KB metrics ────────────────────────────────────────────────────────────
@@ -574,7 +574,7 @@ if st.session_state.show_new_customer:
 elif cid is None:
     st.markdown(
         "<h1 style='margin-bottom:0.2rem'>🏦 AWS Financial Services Assistant</h1>"
-        "<p style='color:#888;margin-top:0'>Presidio AWS Financial Services Practice · "
+        "<p style='color:#888;margin-top:0'>AWS Financial Services Assistant · "
         "Compliance-Validated Architecture Design</p>",
         unsafe_allow_html=True,
     )
@@ -805,7 +805,7 @@ elif cvid is None:
             st.markdown("**Generate Financial Services Discovery Brief**")
             st.caption(
                 "Web research + AWS KB → Regulation-aware, persona-targeted "
-                "Presidio call-prep brief with compliance risk assessment"
+                "Discovery brief with compliance risk assessment"
             )
 
             disc_website = st.text_input(
