@@ -7,6 +7,13 @@ RUN npm ci
 COPY . .
 # Ensure public/ exists so the COPY in the runner stage never fails
 RUN mkdir -p /app/public
+
+# Bake NEXT_PUBLIC_API_URL into the Next.js bundle at build time.
+# Railway passes service variables as Docker build args automatically
+# when the variable name matches the ARG name.
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 RUN npm run build
 
 # Production runner using standalone output
