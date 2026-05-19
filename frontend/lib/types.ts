@@ -70,6 +70,7 @@ export interface SSEEvent {
 export interface StreamState {
   status: string;       // latest status message from the agent
   tokens: string;       // accumulated token stream (partial response)
+  connecting: boolean;  // true while waiting for first SSE byte
   done: boolean;
   error: string | null;
   fullResponse: string; // complete response once done
@@ -78,6 +79,7 @@ export interface StreamState {
 export const INITIAL_STREAM_STATE: StreamState = {
   status: "",
   tokens: "",
+  connecting: false,
   done: false,
   error: null,
   fullResponse: "",

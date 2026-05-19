@@ -7,27 +7,33 @@ import { INITIAL_STREAM_STATE } from "@/lib/types";
 /**
  * Generic SSE stream hook.
  *
- * Opens a POST → EventSource connection by first making the POST request and
- * then reading the response body as a ReadableStream of SSE data.
+ * For SSE endpoints we bypass the Next.js rewrite proxy and call the API
+ * directly. Railway's frontend service has a short idle timeout; a 9-minute
+ * streaming response must travel directly from the API to the browser.
  *
- * (Native EventSource only supports GET; we use fetch + ReadableStream to
- * support POST endpoints with a JSON body.)
+ * In production set NEXT_PUBLIC_API_URL=https://your-api.up.railway.app in
+ * the Railway frontend service env vars so the bundle picks it up at build
+ * time. In local dev the var is unset and the relative /api/... path falls
+ * back to the Next.js rewrite proxy (which is fine for localhost).
  */
+
+const SSE_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+
 export function useSSEStream() {
   const [state, setState] = useState<StreamState>(INITIAL_STREAM_STATE);
   const abortRef = useRef<AbortController | null>(null);
 
   const stream = useCallback(
-    async (url: string, body: Record<string, unknown>) => {
-      // Cancel any in-flight request
+    async (path: string, body: Record<string, unknown>) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
 
-      setState({ ...INITIAL_STREAM_STATE });
+      // Show connecting spinner immediately — before the first SSE byte
+      setState({ ...INITIAL_STREAM_STATE, connecting: true });
 
       try {
-        const res = await fetch(url, {
+        const res = await fetch(`${SSE_BASE}${path}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
           body: JSON.stringify(body),
@@ -42,13 +48,13 @@ export function useSSEStream() {
           } catch {
             // ignore
           }
-          setState((s) => ({ ...s, error: `${res.status}: ${detail}`, done: true }));
+          setState((s) => ({ ...s, connecting: false, error: `${res.status}: ${detail}`, done: true }));
           return;
         }
 
         const reader = res.body?.getReader();
         if (!reader) {
-          setState((s) => ({ ...s, error: "No response body", done: true }));
+          setState((s) => ({ ...s, connecting: false, error: "No response body", done: true }));
           return;
         }
 
@@ -59,9 +65,11 @@ export function useSSEStream() {
           const { done, value } = await reader.read();
           if (done) break;
 
+          // First byte received — clear the connecting flag
+          setState((s) => s.connecting ? { ...s, connecting: false } : s);
+
           buffer += decoder.decode(value, { stream: true });
 
-          // SSE lines look like: "data: {...}\n\n"
           const lines = buffer.split("\n");
           buffer = lines.pop() ?? "";
 
@@ -86,6 +94,7 @@ export function useSSEStream() {
                 ...s,
                 fullResponse: event.text,
                 tokens: event.text,
+                connecting: false,
                 done: true,
                 status: "",
               }));
@@ -93,6 +102,7 @@ export function useSSEStream() {
             } else if (event.type === "error") {
               setState((s) => ({
                 ...s,
+                connecting: false,
                 error: event.text,
                 done: true,
               }));
@@ -104,6 +114,7 @@ export function useSSEStream() {
         if ((err as Error)?.name === "AbortError") return;
         setState((s) => ({
           ...s,
+          connecting: false,
           error: (err as Error)?.message ?? "Unknown error",
           done: true,
         }));
@@ -114,7 +125,7 @@ export function useSSEStream() {
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
-    setState((s) => ({ ...s, done: true }));
+    setState((s) => ({ ...s, connecting: false, done: true }));
   }, []);
 
   const reset = useCallback(() => {

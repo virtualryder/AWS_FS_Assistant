@@ -9,7 +9,7 @@ export default function StatusTicker({ message, visible }: Props) {
   if (!visible || !message) return null;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg">
+    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 rounded-lg">
       {/* Spinner */}
       <svg
         className="animate-spin h-3.5 w-3.5 text-blue-500 flex-shrink-0"

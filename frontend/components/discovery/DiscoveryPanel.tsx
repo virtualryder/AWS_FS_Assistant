@@ -18,7 +18,7 @@ export default function DiscoveryPanel({ customer, onBriefSaved }: Props) {
   const [notes, setNotes] = useState("");
   const { state, generateBrief, cancel } = useDiscoveryStream();
 
-  const isRunning = !state.done && state.status !== "";
+  const isRunning = !state.done && (state.connecting || state.status !== "");
   const hasResult = state.done && state.fullResponse;
 
   async function handleGenerate() {
@@ -29,14 +29,14 @@ export default function DiscoveryPanel({ customer, onBriefSaved }: Props) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Form */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
           Generate Discovery Brief — {customer.name}
         </h2>
 
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
               Company Website
             </label>
             <input
@@ -45,7 +45,9 @@ export default function DiscoveryPanel({ customer, onBriefSaved }: Props) {
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://www.example.com"
               disabled={isRunning}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                placeholder-gray-400 dark:placeholder-gray-500
                 focus:outline-none focus:ring-2 focus:ring-aws-orange disabled:opacity-60"
             />
           </div>
@@ -71,7 +73,7 @@ export default function DiscoveryPanel({ customer, onBriefSaved }: Props) {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Notes / Context
           </label>
           <textarea
@@ -80,14 +82,19 @@ export default function DiscoveryPanel({ customer, onBriefSaved }: Props) {
             placeholder="Pre-call notes, recent news, known pain points…"
             rows={2}
             disabled={isRunning}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+              bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+              placeholder-gray-400 dark:placeholder-gray-500
               focus:outline-none focus:ring-2 focus:ring-aws-orange resize-none disabled:opacity-60"
           />
         </div>
 
         {isRunning && (
           <div className="mt-2">
-            <StatusTicker message={state.status} visible />
+            <StatusTicker
+              message={state.connecting ? "⏳  Connecting to discovery agent…" : state.status}
+              visible
+            />
           </div>
         )}
       </div>

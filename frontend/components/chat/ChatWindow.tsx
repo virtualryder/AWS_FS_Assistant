@@ -69,7 +69,7 @@ export default function ChatWindow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.done, state.fullResponse]);
 
-  const isStreaming = !state.done && state.status !== "";
+  const isStreaming = !state.done && (state.connecting || state.status !== "");
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -129,7 +129,10 @@ export default function ChatWindow({
         {isStreaming && (
           <div className="flex justify-start">
             <div className="chat-assistant max-w-3xl w-full px-5 py-4 space-y-3">
-              <StatusTicker message={state.status} visible={!!state.status && !state.tokens} />
+              <StatusTicker
+                message={state.connecting ? "⏳  Connecting to agent…" : state.status}
+                visible={!state.tokens}
+              />
               {state.tokens && (
                 <MarkdownRenderer content={state.tokens} />
               )}
@@ -148,7 +151,7 @@ export default function ChatWindow({
 
       {/* Input area */}
       <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-4">
-        {isStreaming && (
+        {isStreaming && state.status && !state.tokens && (
           <div className="mb-2">
             <StatusTicker message={state.status} visible />
           </div>
