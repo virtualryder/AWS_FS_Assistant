@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 
 export default function DarkModeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);   // dark by default
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const dark = stored ? stored === "dark" : prefersDark;
+    // Default to dark unless user explicitly stored "light"
+    const dark = stored ? stored === "dark" : true;
     setIsDark(dark);
     setMounted(true);
     document.documentElement.classList.toggle("dark", dark);
@@ -37,7 +37,7 @@ export default function DarkModeToggle() {
         hover:border-aws-orange hover:scale-110
         transition-all duration-200"
     >
-      {mounted ? (isDark ? "☀️" : "🌙") : "🌙"}
+      {mounted ? (isDark ? "☀️" : "🌙") : "☀️"}
     </button>
   );
 }
