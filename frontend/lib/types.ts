@@ -41,12 +41,34 @@ export interface CustomerDocument {
   uploaded_at: string;
 }
 
+export interface SeedEntry {
+  key: string;
+  name: string;
+  tier: number;
+  url: string;
+  indexed: boolean;
+  active: boolean;
+  chunks: number;
+  pages: number;
+  last_indexed: string | null;
+}
+
+export interface IngestProgress {
+  current_service: string | null;
+  services_done: number;
+  services_total: number;
+  started_at: string | null;
+}
+
 export interface KnowledgeBaseStatus {
   chunk_count: number;
   last_updated: string | null;
   total_chunks: number;
-  sources: Record<string, unknown>;
   ingest_running: boolean;
+  ingest_progress: IngestProgress | null;
+  all_seeds: SeedEntry[];
+  indexed_services: number;
+  total_services: number;
 }
 
 export interface KBSource {
