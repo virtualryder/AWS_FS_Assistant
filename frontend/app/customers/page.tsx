@@ -5,6 +5,7 @@ import useSWR from "swr";
 import type { Customer, KnowledgeBaseStatus } from "@/lib/types";
 import { customersApi, kbApi } from "@/lib/api";
 import Sidebar from "@/components/sidebar/Sidebar";
+import KnowledgeBasePanel from "@/components/knowledge/KnowledgeBasePanel";
 
 const fetchCustomers = () => customersApi.list();
 const fetchKb = () => kbApi.status();
@@ -29,18 +30,23 @@ export default function CustomersPage() {
       />
 
       {/* Main area — no customer selected */}
-      <main className="flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="text-center max-w-lg px-6">
-          <div className="text-6xl mb-6">🏦</div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-            AWS Financial Services Assistant
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
-            Presidio AWS Financial Services Practice — dual AI agents providing
-            compliance-validated architecture design for GLBA, PCI DSS, SOX,
-            FFIEC, and NIST AI RMF.
-          </p>
-          <div className="grid grid-cols-2 gap-3 text-sm text-left">
+      <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-4xl mx-auto px-8 py-10">
+          {/* Hero */}
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4">🏦</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              AWS Financial Services Assistant
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xl mx-auto">
+              Presidio AWS Financial Services Practice — dual AI agents providing
+              compliance-validated architecture design for GLBA, PCI DSS, SOX,
+              FFIEC, and NIST AI RMF.
+            </p>
+          </div>
+
+          {/* Capability cards */}
+          <div className="grid grid-cols-2 gap-3 mb-8 text-sm text-left">
             {[
               { icon: "🏗️", label: "AWS Architect Agent", desc: "Compliance-validated architecture with GLBA, PCI DSS v4.0.1, SOX, FFIEC" },
               { icon: "🤖", label: "GenAI/ML Agent", desc: "Bedrock, SageMaker, AgentCore with NIST AI RMF governance" },
@@ -57,7 +63,13 @@ export default function CustomersPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-6">
+
+          {/* Knowledge base panel */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <KnowledgeBasePanel status={kb} />
+          </div>
+
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-6">
             Select or create a customer in the sidebar to get started.
           </p>
         </div>

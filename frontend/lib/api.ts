@@ -9,6 +9,7 @@ import type {
   Message,
   CustomerDocument,
   KnowledgeBaseStatus,
+  KBSource,
 } from "./types";
 
 const BASE = "/api";
@@ -137,6 +138,9 @@ export const documentsApi = {
 export const kbApi = {
   status: (): Promise<KnowledgeBaseStatus> =>
     apiFetch("/knowledge-base/status"),
+
+  sources: (): Promise<{ sources: KBSource[] }> =>
+    apiFetch("/knowledge-base/sources"),
 
   triggerIngest: (): Promise<{ status: string; message: string }> =>
     apiFetch("/knowledge-base/ingest", { method: "POST" }),

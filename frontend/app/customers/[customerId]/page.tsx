@@ -10,8 +10,9 @@ import CustomerHeader from "@/components/customers/CustomerHeader";
 import ConversationList from "@/components/conversations/ConversationList";
 import DocumentsPanel from "@/components/customers/DocumentsPanel";
 import DiscoveryPanel from "@/components/discovery/DiscoveryPanel";
+import KnowledgeBasePanel from "@/components/knowledge/KnowledgeBasePanel";
 
-type TabId = "conversations" | "discovery" | "documents";
+type TabId = "conversations" | "discovery" | "documents" | "knowledge";
 
 export default function CustomerPage() {
   const { customerId } = useParams<{ customerId: string }>();
@@ -55,6 +56,7 @@ export default function CustomerPage() {
     { id: "conversations", label: "Conversations" },
     { id: "discovery",     label: "Discovery Brief" },
     { id: "documents",     label: `Documents (${documents.length})` },
+    { id: "knowledge",     label: "Knowledge Base" },
   ];
 
   return (
@@ -131,6 +133,12 @@ export default function CustomerPage() {
                 documents={documents}
                 onChanged={() => mutateDocuments()}
               />
+            </div>
+          )}
+
+          {activeTab === "knowledge" && (
+            <div className="h-full overflow-y-auto px-6 py-4 max-w-3xl">
+              <KnowledgeBasePanel status={kb} />
             </div>
           )}
         </div>

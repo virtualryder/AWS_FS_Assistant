@@ -240,6 +240,39 @@ def query_docs(text: str, n_results: int = TOP_K) -> list[dict]:
 
 # ── Manifest (stored in Postgres, not on disk) ────────────────────────────────
 
+def get_indexed_sources() -> list[dict]:
+    """
+    Return a grouped list of indexed source labels with chunk counts and tiers.
+
+    Each entry:
+        { source_label, chunk_count, tier, last_indexed }
+    sorted by tier ASC then source_label ASC.
+    """
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT source_label,
+                   COUNT(*)       AS chunk_count,
+                   MIN(tier)      AS tier,
+                   MAX(ingestion_date) AS last_indexed
+            FROM doc_chunks
+            GROUP BY source_label
+            ORDER BY MIN(tier) ASC, source_label ASC
+            """
+        )
+        rows = cur.fetchall()
+    return [
+        {
+            "source_label": row[0],
+            "chunk_count":  row[1],
+            "tier":         row[2],
+            "last_indexed": row[3],
+        }
+        for row in rows
+    ]
+
+
 def get_manifest() -> dict:
     """Load the ingestion manifest from the database."""
     try:

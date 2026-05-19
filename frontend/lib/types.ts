@@ -49,6 +49,13 @@ export interface KnowledgeBaseStatus {
   ingest_running: boolean;
 }
 
+export interface KBSource {
+  source_label: string;
+  chunk_count: number;
+  tier: number;
+  last_indexed: string;
+}
+
 // ── SSE event types ───────────────────────────────────────────────────────────
 
 export type SSEEventType = "status" | "token" | "done" | "error";

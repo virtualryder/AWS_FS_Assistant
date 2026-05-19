@@ -40,6 +40,16 @@ async def get_status():
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+@router.get("/sources")
+async def get_sources():
+    """Return grouped list of indexed AWS documentation sources with chunk counts."""
+    try:
+        return {"sources": db.get_indexed_sources()}
+    except Exception as exc:
+        logger.exception("Failed to get knowledge base sources")
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @router.post("/ingest", status_code=202)
 async def trigger_ingest(background_tasks: BackgroundTasks):
     """
