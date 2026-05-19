@@ -9,6 +9,7 @@ Routes:
   DELETE /api/customers/{customer_id}   — delete a customer (cascade-deletes conversations)
 """
 
+import logging
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from pydantic import BaseModel
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import vectorstore.pg_client as db
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["customers"])
 
 
@@ -49,14 +51,18 @@ async def list_customers():
 
 @router.post("/customers", status_code=201)
 async def create_customer(body: CustomerCreate):
-    customer_id = db.create_customer(
-        name=body.name,
-        industry=body.industry,
-        arch_context=body.arch_context,
-        stage=body.stage,
-    )
-    customer = db.get_customer(customer_id)
-    return _serialize(customer)
+    try:
+        customer_id = db.create_customer(
+            name=body.name,
+            industry=body.industry,
+            arch_context=body.arch_context,
+            stage=body.stage,
+        )
+        customer = db.get_customer(customer_id)
+        return _serialize(customer)
+    except Exception as exc:
+        logger.exception("Failed to create customer")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("/customers/{customer_id}")
