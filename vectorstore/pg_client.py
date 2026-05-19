@@ -59,12 +59,18 @@ def _get_conn() -> psycopg2.extensions.connection:
     global _conn
     try:
         if _conn is not None and not _conn.closed:
-            # Quick liveness check
+            # Quick liveness check — also catches InFailedSqlTransaction
             with _conn.cursor() as cur:
                 cur.execute("SELECT 1")
             return _conn
-    except psycopg2.OperationalError:
-        pass
+    except psycopg2.Error:
+        # Any DB error (OperationalError, InFailedSqlTransaction, etc.)
+        # means the connection is unusable — close and reconnect.
+        try:
+            _conn.close()
+        except Exception:
+            pass
+        _conn = None
 
     if not DATABASE_URL:
         raise ValueError(
@@ -389,12 +395,16 @@ def _init_customer_schema(conn: psycopg2.extensions.connection) -> None:
 def create_customer(name: str, industry: str = "", arch_context: str = "", stage: str = "Prospect") -> str:
     customer_id = str(uuid.uuid4())
     conn = _get_conn()
-    with conn.cursor() as cur:
-        cur.execute(
-            "INSERT INTO customers (id, name, industry, arch_context, stage) VALUES (%s, %s, %s, %s, %s)",
-            (customer_id, name.strip(), industry.strip(), arch_context.strip(), stage),
-        )
-    conn.commit()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO customers (id, name, industry, arch_context, stage) VALUES (%s, %s, %s, %s, %s)",
+                (customer_id, name.strip(), industry.strip(), arch_context.strip(), stage),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     return customer_id
 
 
@@ -441,20 +451,28 @@ def get_customer(customer_id: str) -> dict | None:
 
 def update_customer(customer_id: str, name: str, industry: str, arch_context: str, stage: str = "Prospect") -> None:
     conn = _get_conn()
-    with conn.cursor() as cur:
-        cur.execute(
-            "UPDATE customers SET name=%s, industry=%s, arch_context=%s, stage=%s, updated_at=NOW() "
-            "WHERE id=%s",
-            (name.strip(), industry.strip(), arch_context.strip(), stage, customer_id),
-        )
-    conn.commit()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE customers SET name=%s, industry=%s, arch_context=%s, stage=%s, updated_at=NOW() "
+                "WHERE id=%s",
+                (name.strip(), industry.strip(), arch_context.strip(), stage, customer_id),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
 
 
 def delete_customer(customer_id: str) -> None:
     conn = _get_conn()
-    with conn.cursor() as cur:
-        cur.execute("DELETE FROM customers WHERE id = %s", (customer_id,))
-    conn.commit()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM customers WHERE id = %s", (customer_id,))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
 
 
 # ── Conversation CRUD ─────────────────────────────────────────────────────────
