@@ -38,14 +38,14 @@ export default function NewCustomerModal({ onClose, onCreated }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-gray-200 dark:border-gray-700">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">New Customer</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">New Customer</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none"
           >
             ×
           </button>
@@ -54,7 +54,7 @@ export default function NewCustomerModal({ onClose, onCreated }: Props) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Customer Name *
             </label>
             <input
@@ -62,7 +62,9 @@ export default function NewCustomerModal({ onClose, onCreated }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. First National Bank"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                placeholder-gray-400 dark:placeholder-gray-500
                 focus:outline-none focus:ring-2 focus:ring-aws-orange focus:border-transparent"
               autoFocus
               required
@@ -71,13 +73,14 @@ export default function NewCustomerModal({ onClose, onCreated }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Entity Type
               </label>
               <select
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                  bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                   focus:outline-none focus:ring-2 focus:ring-aws-orange"
               >
                 <option value="">Select type…</option>
@@ -88,13 +91,14 @@ export default function NewCustomerModal({ onClose, onCreated }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Stage
               </label>
               <select
                 value={stage}
                 onChange={(e) => setStage(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                  bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                   focus:outline-none focus:ring-2 focus:ring-aws-orange"
               >
                 {STAGE_OPTIONS.map((s) => (
@@ -105,29 +109,33 @@ export default function NewCustomerModal({ onClose, onCreated }: Props) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Architecture Context{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
             </label>
             <textarea
               value={archContext}
               onChange={(e) => setArchContext(e.target.value)}
               placeholder="Current cloud setup, key applications, compliance requirements…"
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                placeholder-gray-400 dark:placeholder-gray-500
                 focus:outline-none focus:ring-2 focus:ring-aws-orange resize-none"
             />
           </div>
 
           {error && (
-            <p className="text-xs text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
+            <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded px-3 py-2 border border-red-200 dark:border-red-800">
+              {error}
+            </p>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
             >
               Cancel
             </button>

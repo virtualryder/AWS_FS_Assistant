@@ -39,26 +39,28 @@ export default function CustomerHeader({ customer, onUpdated, onDeleted }: Props
     onDeleted();
   }
 
+  const inputClass = `w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm
+    bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+    focus:outline-none focus:ring-2 focus:ring-aws-orange`;
+
   if (editing) {
     return (
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name</label>
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm
-                focus:outline-none focus:ring-2 focus:ring-aws-orange"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Entity Type</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Entity Type</label>
             <select
               value={form.industry}
               onChange={(e) => setForm({ ...form, industry: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm
-                focus:outline-none focus:ring-2 focus:ring-aws-orange"
+              className={inputClass}
             >
               <option value="">Select…</option>
               {FS_ENTITY_TYPES.map((t) => (
@@ -68,12 +70,13 @@ export default function CustomerHeader({ customer, onUpdated, onDeleted }: Props
           </div>
         </div>
         <div className="mb-3">
-          <label className="block text-xs font-medium text-gray-600 mb-1">Stage</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Stage</label>
           <select
             value={form.stage}
             onChange={(e) => setForm({ ...form, stage: e.target.value as Customer["stage"] })}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
-              focus:outline-none focus:ring-2 focus:ring-aws-orange"
+            className={`border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm
+              bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+              focus:outline-none focus:ring-2 focus:ring-aws-orange`}
           >
             {STAGE_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -81,13 +84,12 @@ export default function CustomerHeader({ customer, onUpdated, onDeleted }: Props
           </select>
         </div>
         <div className="mb-3">
-          <label className="block text-xs font-medium text-gray-600 mb-1">Architecture Context</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Architecture Context</label>
           <textarea
             value={form.arch_context}
             onChange={(e) => setForm({ ...form, arch_context: e.target.value })}
             rows={3}
-            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm
-              focus:outline-none focus:ring-2 focus:ring-aws-orange resize-none"
+            className={`${inputClass} resize-none`}
           />
         </div>
         <div className="flex gap-2">
@@ -101,7 +103,7 @@ export default function CustomerHeader({ customer, onUpdated, onDeleted }: Props
           </button>
           <button
             onClick={() => setEditing(false)}
-            className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+            className="px-4 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >
             Cancel
           </button>
@@ -111,37 +113,36 @@ export default function CustomerHeader({ customer, onUpdated, onDeleted }: Props
   }
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-start justify-between">
+    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-start justify-between">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-gray-900">{customer.name}</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{customer.name}</h1>
           <StageBadge stage={customer.stage} />
         </div>
         {customer.industry && (
-          <div className="text-sm text-gray-500 mt-0.5">{customer.industry}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{customer.industry}</div>
         )}
       </div>
       <div className="flex items-center gap-2">
         <button
           onClick={() => setEditing(true)}
-          className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5
-            border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 px-3 py-1.5
+            border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           Edit
         </button>
         {confirmDelete ? (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-red-600">Delete customer?</span>
+            <span className="text-xs text-red-600 dark:text-red-400">Delete customer?</span>
             <button
               onClick={handleDelete}
-              className="text-xs text-white bg-red-600 hover:bg-red-700
-                px-2 py-1 rounded"
+              className="text-xs text-white bg-red-600 hover:bg-red-700 px-2 py-1 rounded"
             >
               Yes
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
-              className="text-xs text-gray-600 hover:text-gray-900 px-2 py-1"
+              className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-2 py-1"
             >
               No
             </button>
@@ -150,7 +151,7 @@ export default function CustomerHeader({ customer, onUpdated, onDeleted }: Props
           <button
             onClick={() => setConfirmDelete(true)}
             className="text-xs text-red-500 hover:text-red-700 px-3 py-1.5
-              border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+              border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
           >
             Delete
           </button>
