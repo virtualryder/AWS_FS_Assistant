@@ -2,17 +2,18 @@
 
 import { useRef, useState } from "react";
 import type { CustomerDocument } from "@/lib/types";
-import { documentsApi } from "@/lib/api";
+import { documentsApi, projectsApi } from "@/lib/api";
 
 interface Props {
   customerId: string;
+  projectId?: string;
   documents: CustomerDocument[];
   onChanged: () => void;
 }
 
 const ALLOWED_TYPES = ".pdf,.docx,.txt,.md";
 
-export default function DocumentsPanel({ customerId, documents, onChanged }: Props) {
+export default function DocumentsPanel({ customerId, projectId, documents, onChanged }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -24,7 +25,11 @@ export default function DocumentsPanel({ customerId, documents, onChanged }: Pro
     const errs: string[] = [];
     for (const file of Array.from(files)) {
       try {
-        await documentsApi.upload(customerId, file);
+        if (projectId) {
+          await projectsApi.uploadDocument(projectId, file);
+        } else {
+          await documentsApi.upload(customerId, file);
+        }
       } catch (err: unknown) {
         errs.push(`${file.name}: ${(err as Error).message}`);
       }

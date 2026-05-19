@@ -12,6 +12,10 @@ interface Props {
   activeConvId?: string;
   onCreated: (conv: Conversation) => void;
   onDeleted: (convId: string) => void;
+  /** When set, conversations link back to this project page */
+  projectId?: string;
+  /** Override the default create conversation call for project-scoped creation */
+  createConversation?: () => Promise<Conversation>;
 }
 
 export default function ConversationList({
@@ -20,6 +24,8 @@ export default function ConversationList({
   activeConvId,
   onCreated,
   onDeleted,
+  projectId,
+  createConversation,
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -27,7 +33,9 @@ export default function ConversationList({
   async function handleNew() {
     setCreating(true);
     try {
-      const conv = await conversationsApi.create(customerId);
+      const conv = createConversation
+        ? await createConversation()
+        : await conversationsApi.create(customerId);
       onCreated(conv);
     } finally {
       setCreating(false);
@@ -74,7 +82,7 @@ export default function ConversationList({
                 }`}
             >
               <Link
-                href={`/customers/${customerId}/conversations/${c.id}`}
+                href={`/customers/${customerId}/conversations/${c.id}${projectId ? `?projectId=${projectId}` : ""}`}
                 className="flex-1 min-w-0"
               >
                 <div className="truncate font-medium text-gray-900">{c.title}</div>

@@ -18,9 +18,21 @@ export interface Customer {
   last_active_at: string | null;
 }
 
+export interface Project {
+  id: string;
+  customer_id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  conversation_count: number;
+  document_count: number;
+}
+
 export interface Conversation {
   id: string;
   customer_id: string;
+  project_id?: string | null;
   title: string;
   created_at: string;
   updated_at: string;

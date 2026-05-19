@@ -10,10 +10,11 @@ import { downloadText } from "@/lib/utils";
 
 interface Props {
   customer: Customer;
+  projectName?: string;
   onBriefSaved?: () => void;
 }
 
-export default function DiscoveryPanel({ customer, onBriefSaved }: Props) {
+export default function DiscoveryPanel({ customer, projectName, onBriefSaved }: Props) {
   const [website, setWebsite] = useState("");
   const [notes, setNotes] = useState("");
   const { state, generateBrief, cancel } = useDiscoveryStream();

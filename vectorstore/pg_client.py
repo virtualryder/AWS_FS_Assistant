@@ -372,6 +372,22 @@ def _init_customer_schema(conn: psycopg2.extensions.connection) -> None:
             ON messages (conversation_id, turn_index ASC)
         """)
 
+        # Projects
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS projects (
+                id          TEXT PRIMARY KEY,
+                customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+                name        TEXT NOT NULL,
+                description TEXT DEFAULT '',
+                created_at  TIMESTAMPTZ DEFAULT NOW(),
+                updated_at  TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        cur.execute("""
+            CREATE INDEX IF NOT EXISTS projects_customer_idx
+            ON projects (customer_id, updated_at DESC)
+        """)
+
         # Customer documents
         cur.execute("""
             CREATE TABLE IF NOT EXISTS customer_documents (
@@ -387,6 +403,16 @@ def _init_customer_schema(conn: psycopg2.extensions.connection) -> None:
         cur.execute("""
             CREATE INDEX IF NOT EXISTS customer_docs_idx
             ON customer_documents (customer_id, is_active)
+        """)
+
+        # Migrate: add project_id to conversations and documents
+        cur.execute("""
+            ALTER TABLE conversations
+            ADD COLUMN IF NOT EXISTS project_id TEXT REFERENCES projects(id) ON DELETE SET NULL
+        """)
+        cur.execute("""
+            ALTER TABLE customer_documents
+            ADD COLUMN IF NOT EXISTS project_id TEXT REFERENCES projects(id) ON DELETE SET NULL
         """)
 
 
@@ -741,3 +767,156 @@ def delete_customer_document(doc_id: str) -> None:
     with conn.cursor() as cur:
         cur.execute("DELETE FROM customer_documents WHERE id = %s", (doc_id,))
     conn.commit()
+
+
+# ── Project CRUD ──────────────────────────────────────────────────────────────
+
+def create_project(customer_id: str, name: str, description: str = "") -> str:
+    project_id = str(uuid.uuid4())
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO projects (id, customer_id, name, description) VALUES (%s, %s, %s, %s)",
+                (project_id, customer_id, name.strip(), description.strip()),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return project_id
+
+
+def get_projects(customer_id: str) -> list[dict]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT p.id, p.name, p.description, p.created_at, p.updated_at,
+                   COUNT(DISTINCT c.id) AS conversation_count,
+                   COUNT(DISTINCT d.id) AS document_count
+            FROM projects p
+            LEFT JOIN conversations c ON c.project_id = p.id
+            LEFT JOIN customer_documents d ON d.project_id = p.id
+            WHERE p.customer_id = %s
+            GROUP BY p.id
+            ORDER BY p.updated_at DESC
+            """,
+            (customer_id,),
+        )
+        rows = cur.fetchall()
+    return [
+        {
+            "id": r[0], "name": r[1], "description": r[2],
+            "created_at": r[3], "updated_at": r[4],
+            "conversation_count": r[5], "document_count": r[6],
+        }
+        for r in rows
+    ]
+
+
+def get_project(project_id: str) -> dict | None:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, customer_id, name, description, created_at, updated_at "
+            "FROM projects WHERE id = %s",
+            (project_id,),
+        )
+        row = cur.fetchone()
+    if not row:
+        return None
+    return {
+        "id": row[0], "customer_id": row[1], "name": row[2],
+        "description": row[3], "created_at": row[4], "updated_at": row[5],
+    }
+
+
+def update_project(project_id: str, name: str, description: str = "") -> None:
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE projects SET name=%s, description=%s, updated_at=NOW() WHERE id=%s",
+                (name.strip(), description.strip(), project_id),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def delete_project(project_id: str) -> None:
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM projects WHERE id = %s", (project_id,))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def get_project_conversations(project_id: str) -> list[dict]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, title, created_at, updated_at "
+            "FROM conversations WHERE project_id = %s "
+            "ORDER BY updated_at DESC",
+            (project_id,),
+        )
+        rows = cur.fetchall()
+    return [{"id": r[0], "title": r[1], "created_at": r[2], "updated_at": r[3]}
+            for r in rows]
+
+
+def create_project_conversation(project_id: str, customer_id: str) -> str:
+    conv_id = str(uuid.uuid4())
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO conversations (id, customer_id, project_id, title) VALUES (%s, %s, %s, %s)",
+                (conv_id, customer_id, project_id, "New Conversation"),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return conv_id
+
+
+def get_project_documents(project_id: str) -> list[dict]:
+    conn = _get_conn()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, customer_id, filename, extracted_text, char_count, is_active, uploaded_at "
+            "FROM customer_documents WHERE project_id = %s ORDER BY uploaded_at ASC",
+            (project_id,),
+        )
+        rows = cur.fetchall()
+    return [
+        {"id": r[0], "customer_id": r[1], "filename": r[2], "extracted_text": r[3],
+         "char_count": r[4], "is_active": r[5], "uploaded_at": r[6]}
+        for r in rows
+    ]
+
+
+def save_project_document(project_id: str, customer_id: str, filename: str, extracted_text: str) -> str:
+    doc_id = str(uuid.uuid4())
+    conn = _get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO customer_documents (id, customer_id, project_id, filename, extracted_text, char_count)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (doc_id, customer_id, project_id, filename, extracted_text, len(extracted_text)),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return doc_id

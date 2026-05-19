@@ -26,7 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from api.session_store import store as session_store
-from api.routers import customers, conversations, chat, documents, discovery, knowledge_base, general_chat
+from api.routers import customers, conversations, chat, documents, discovery, knowledge_base, general_chat, projects
 
 logging.basicConfig(
     level=logging.INFO,
@@ -95,6 +95,7 @@ app.include_router(documents.router,       prefix="/api")
 app.include_router(discovery.router,       prefix="/api")
 app.include_router(knowledge_base.router,  prefix="/api")
 app.include_router(general_chat.router,    prefix="/api")
+app.include_router(projects.router,        prefix="/api")
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

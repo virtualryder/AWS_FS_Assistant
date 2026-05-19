@@ -10,6 +10,7 @@ import type {
   CustomerDocument,
   KnowledgeBaseStatus,
   KBSource,
+  Project,
 } from "./types";
 
 const BASE = "/api";
@@ -131,6 +132,58 @@ export const documentsApi = {
 
   delete: (docId: string): Promise<void> =>
     apiFetch(`/documents/${docId}`, { method: "DELETE" }),
+};
+
+// ── Projects ──────────────────────────────────────────────────────────────────
+
+export const projectsApi = {
+  list: (customerId: string): Promise<Project[]> =>
+    apiFetch(`/customers/${customerId}/projects`),
+
+  get: (projectId: string): Promise<Project> =>
+    apiFetch(`/projects/${projectId}`),
+
+  create: (customerId: string, data: { name: string; description?: string }): Promise<Project> =>
+    apiFetch(`/customers/${customerId}/projects`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (projectId: string, data: { name: string; description?: string }): Promise<Project> =>
+    apiFetch(`/projects/${projectId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (projectId: string): Promise<void> =>
+    apiFetch(`/projects/${projectId}`, { method: "DELETE" }),
+
+  listConversations: (projectId: string): Promise<Conversation[]> =>
+    apiFetch(`/projects/${projectId}/conversations`),
+
+  createConversation: (projectId: string): Promise<Conversation> =>
+    apiFetch(`/projects/${projectId}/conversations`, { method: "POST" }),
+
+  listDocuments: (projectId: string): Promise<CustomerDocument[]> =>
+    apiFetch(`/projects/${projectId}/documents`),
+
+  uploadDocument: async (projectId: string, file: File): Promise<CustomerDocument> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${BASE}/projects/${projectId}/documents`, {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const body = await res.json();
+        detail = body.detail ?? detail;
+      } catch { /* ignore */ }
+      throw new Error(`Upload failed ${res.status}: ${detail}`);
+    }
+    return res.json();
+  },
 };
 
 // ── Knowledge base ────────────────────────────────────────────────────────────

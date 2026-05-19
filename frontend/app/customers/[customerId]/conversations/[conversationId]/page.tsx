@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import useSWR from "swr";
 import type { Customer, Conversation, Message, CustomerDocument, KnowledgeBaseStatus } from "@/lib/types";
@@ -16,6 +16,11 @@ export default function ConversationPage() {
     conversationId: string;
   }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get("projectId");
+  const backHref = projectId
+    ? `/customers/${customerId}/projects/${projectId}`
+    : `/customers/${customerId}`;
   const [confirmClear, setConfirmClear] = useState(false);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
@@ -96,7 +101,7 @@ export default function ConversationPage() {
         <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <Link
-              href={`/customers/${customerId}`}
+              href={backHref}
               className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
             >
               ← Back

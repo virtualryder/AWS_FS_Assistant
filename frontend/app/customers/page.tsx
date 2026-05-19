@@ -18,7 +18,7 @@ export default function CustomersPage() {
   );
 
   const { data: kb } = useSWR<KnowledgeBaseStatus>("kb-status", fetchKb, {
-    refreshInterval: kb?.ingest_running ? 5_000 : 60_000,
+    refreshInterval: (data) => data?.ingest_running ? 5_000 : 60_000,
   });
 
   return (
