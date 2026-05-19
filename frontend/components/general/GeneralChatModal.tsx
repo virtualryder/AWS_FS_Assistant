@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSSEStream } from "@/hooks/useSSEStream";
-import { INITIAL_STREAM_STATE } from "@/lib/types";
 import MarkdownRenderer from "@/components/common/MarkdownRenderer";
 import StatusTicker from "@/components/common/StatusTicker";
 import CopyButton from "@/components/common/CopyButton";
+
+const STORAGE_KEY = "general-chat-history";
+const MAX_STORED = 100; // max messages to persist
 
 interface Message {
   role: "user" | "assistant";
@@ -16,11 +18,31 @@ interface Props {
   onClose: () => void;
 }
 
+function loadHistory(): Message[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as Message[];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(messages: Message[]) {
+  try {
+    // Keep only the most recent MAX_STORED messages
+    const toSave = messages.slice(-MAX_STORED);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch {
+    // localStorage quota exceeded — silently ignore
+  }
+}
+
 export default function GeneralChatModal({ onClose }: Props) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => loadHistory());
   const [input, setInput] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { state, stream, cancel, reset } = useSSEStream();
 
   const isStreaming = !state.done && (state.connecting || state.tokens !== "");
@@ -30,14 +52,16 @@ export default function GeneralChatModal({ onClose }: Props) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, state.tokens]);
 
-  // When streaming finishes, commit assistant message
+  // When streaming finishes, commit assistant message and persist
   useEffect(() => {
     if (state.done && state.fullResponse) {
       setMessages((prev) => {
         if (prev.at(-1)?.role === "assistant" && prev.at(-1)?.content === state.fullResponse) {
           return prev;
         }
-        return [...prev, { role: "assistant", content: state.fullResponse }];
+        const next = [...prev, { role: "assistant" as const, content: state.fullResponse }];
+        saveHistory(next);
+        return next;
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,12 +73,20 @@ export default function GeneralChatModal({ onClose }: Props) {
 
     const updatedMessages: Message[] = [...messages, { role: "user", content: msg }];
     setMessages(updatedMessages);
+    saveHistory(updatedMessages);
     setInput("");
     reset();
 
     await stream("/api/general-chat", {
       messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
     });
+  }
+
+  function handleClear() {
+    setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
+    setConfirmClear(false);
+    reset();
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -90,16 +122,47 @@ export default function GeneralChatModal({ onClose }: Props) {
               </div>
               <div className="text-[10px] text-gray-400 dark:text-gray-500">
                 General knowledge · claude-sonnet-4-6
+                {messages.length > 0 && ` · ${messages.length} message${messages.length !== 1 ? "s" : ""}`}
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none p-1"
-            aria-label="Close"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Clear history */}
+            {messages.length > 0 && (
+              confirmClear ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] text-red-500 dark:text-red-400">Clear history?</span>
+                  <button
+                    onClick={handleClear}
+                    className="text-[11px] text-white bg-red-500 hover:bg-red-600 px-2 py-0.5 rounded"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setConfirmClear(false)}
+                    className="text-[11px] text-gray-500 dark:text-gray-400 hover:text-gray-700 px-1.5 py-0.5"
+                  >
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmClear(true)}
+                  className="text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300
+                    px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  Clear
+                </button>
+              )
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none p-1"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -110,6 +173,9 @@ export default function GeneralChatModal({ onClose }: Props) {
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
                 Ask Claude anything — general knowledge, coding, strategy, analysis,
                 or anything else. No agents, no frameworks, just Claude.
+              </p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
+                Conversation history is saved in your browser.
               </p>
             </div>
           )}
@@ -156,7 +222,6 @@ export default function GeneralChatModal({ onClose }: Props) {
         <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3 flex-shrink-0">
           <div className="flex gap-2 items-end">
             <textarea
-              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
