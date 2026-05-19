@@ -73,7 +73,7 @@ export default function CustomerPage() {
           }}
         />
 
-        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 px-8 py-6">
+        <main className="flex-1 overflow-y-auto bg-gray-300 dark:bg-gray-950 px-8 py-6">
           <div className="max-w-3xl mx-auto space-y-5">
             {/* Header row */}
             <div className="flex items-center justify-between">

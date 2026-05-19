@@ -129,7 +129,7 @@ export default function ProjectPage() {
         </div>
 
         {/* Tab content */}
-        <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-950">
+        <div className="flex-1 overflow-hidden bg-gray-300 dark:bg-gray-950">
           {activeTab === "conversations" && (
             <div className="h-full overflow-y-auto px-6 py-4">
               <ConversationList

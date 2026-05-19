@@ -30,7 +30,7 @@ export default function CustomersPage() {
       />
 
       {/* Main area — no customer selected */}
-      <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
+      <main className="flex-1 overflow-y-auto bg-gray-300 dark:bg-gray-950">
         <div className="max-w-4xl mx-auto px-8 py-10">
           {/* Hero */}
           <div className="text-center mb-8">
