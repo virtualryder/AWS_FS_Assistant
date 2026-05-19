@@ -17,7 +17,8 @@ import { INITIAL_STREAM_STATE } from "@/lib/types";
  * back to the Next.js rewrite proxy (which is fine for localhost).
  */
 
-const SSE_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+// Strip trailing slash so paths like "/api/..." never produce a double slash
+const SSE_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 export function useSSEStream() {
   const [state, setState] = useState<StreamState>(INITIAL_STREAM_STATE);
