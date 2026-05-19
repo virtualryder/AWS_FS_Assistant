@@ -30,9 +30,9 @@ export default function ChatWindow({
   const { state, sendMessage, cancel } = useChatStream();
 
   // Sync messages when SWR resolves after initial render (DB reload).
-  // Only apply if no streaming has started yet, to avoid clobbering live responses.
+  // Guard: skip if streaming is active (connecting or status set) or a response just finished.
   useEffect(() => {
-    if (initialMessages.length > 0 && state.done && !state.fullResponse) {
+    if (initialMessages.length > 0 && !state.connecting && state.status === "" && !state.fullResponse) {
       setMessages(initialMessages);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
