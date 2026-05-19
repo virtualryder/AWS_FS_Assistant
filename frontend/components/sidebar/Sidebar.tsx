@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { COMPLIANCE_REFS, KB_CATALOG } from "@/lib/constants";
@@ -40,20 +39,6 @@ export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props
         >
           {theme === "dark" ? "☀️" : "🌙"}
         </button>
-      </div>
-
-      {/* Knowledge base chip */}
-      <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
-        <Link href="/" className="flex items-center justify-between group">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Knowledge Base</span>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-            kbCount > 0
-              ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
-              : "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400"
-          }`}>
-            {kbCount > 0 ? `${kbCount.toLocaleString()} chunks` : "Empty"}
-          </span>
-        </Link>
       </div>
 
       {/* Customer list */}

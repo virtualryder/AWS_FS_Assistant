@@ -588,12 +588,17 @@ Customer Question (for reference): {user_message}
 
     def load_history(self, messages: list[dict]):
         """Load a prior conversation's display history for context continuity."""
-        # Reload into high-level history only; sub-agents start fresh each conversation
+        # Reload into high-level history only; sub-agents start fresh each conversation.
+        # Truncate long assistant responses to keep context window manageable on reload.
+        MAX_ASSISTANT_CHARS = 3000
         for msg in messages:
             if msg.get("role") in ("user", "assistant") and msg.get("display_content"):
+                content = msg["display_content"]
+                if msg["role"] == "assistant" and len(content) > MAX_ASSISTANT_CHARS:
+                    content = content[:MAX_ASSISTANT_CHARS] + "\n\n[… truncated for context …]"
                 self.history.append({
                     "role": msg["role"],
-                    "content": msg["display_content"],
+                    "content": content,
                 })
 
     @property
