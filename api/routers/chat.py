@@ -170,4 +170,4 @@ async def chat(conv_id: str, body: ChatRequest):
             except Exception:
                 logger.exception("Failed to auto-title conv %s", conv_id)
 
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(event_generator(), ping=20)

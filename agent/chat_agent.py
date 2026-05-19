@@ -212,8 +212,7 @@ class FinServChatAgent:
             if status_callback:
                 status_callback(msg)
 
-        _emit("💬  Preparing direct response...")
-        _emit("⏳  Waiting for Claude to begin streaming…")
+        _emit("💬  Preparing direct response…")
 
         if customer_context and customer_context.strip():
             full_message = (
@@ -290,8 +289,7 @@ class FinServChatAgent:
         _emit("─" * 55)
 
         # ── Phase 3: Synthesis ────────────────────────────────────────────────
-        _emit("✨  Synthesizing combined response...")
-        _emit("⏳  Waiting for Claude to begin streaming…")
+        _emit("✨  Synthesizing combined response…")
 
         combination_prompt = f"""\
 Below are two expert analyses of the same customer question. Please synthesize them

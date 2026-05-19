@@ -414,6 +414,7 @@ class GenAIMLAgent:
                     _emit("✍️  [GenAI/ML Expert] Composing AI workflow recommendations...")
                 else:
                     _emit("🤖  [GenAI/ML Expert] Analyzing AI/ML opportunities...")
+                _emit("⏳  [GenAI/ML Expert] Waiting for Claude to start writing…")
 
                 with self.client.messages.stream(
                     model=MODEL_NAME,

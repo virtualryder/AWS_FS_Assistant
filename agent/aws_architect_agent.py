@@ -541,6 +541,7 @@ class AWSArchitectAgent:
                     _emit("✍️  [AWS Architect] Composing compliance-validated architecture...")
                 else:
                     _emit("🏗️  [AWS Architect] Analyzing architecture requirements...")
+                _emit("⏳  [AWS Architect] Waiting for Claude to start writing…")
 
                 with self.client.messages.stream(
                     model=MODEL_NAME,

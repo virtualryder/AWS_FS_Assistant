@@ -106,7 +106,7 @@ async def generate_discovery_brief(customer_id: str, body: DiscoveryRequest):
             except Exception:
                 logger.exception("Failed to save discovery brief as conversation")
 
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(event_generator(), ping=20)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
