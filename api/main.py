@@ -71,14 +71,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow the Next.js dev server and production frontend
+# CORS — allow local dev and all Railway-hosted frontends.
+# allow_origin_regex covers any *.up.railway.app subdomain so we don't
+# need to hard-code the exact service name.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://awsfsfrontend-production.up.railway.app",
     ],
+    allow_origin_regex=r"https://.*\.up\.railway\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
