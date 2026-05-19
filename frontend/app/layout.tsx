@@ -16,12 +16,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    // className="dark" sets dark mode server-side so the first paint is always dark.
+    // ThemeProvider's useEffect will switch to "light" if the user stored that preference.
+    // suppressHydrationWarning silences React when the client overrides the class attribute.
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        {/* Blocking script: apply dark class before first paint to prevent flash */}
+        {/* Blocking script runs synchronously before React hydration.
+            Reads localStorage so returning users get their saved preference immediately. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t=localStorage.getItem('theme');document.documentElement.classList.toggle('dark',t?t==='dark':true);})();`,
+            __html: `(function(){var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.remove('dark');}})();`,
           }}
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
