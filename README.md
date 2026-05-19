@@ -18,7 +18,7 @@ The assistant fields architecture and GenAI/ML questions from your account team 
 4. **Generates financial services discovery briefs** with regulatory risk profiling and targeted discovery questions, powered by live web research (Tavily)
 5. **Remembers conversation history** per customer, injecting prior session summaries into new conversations
 6. **Grounds every response** in real AWS documentation indexed in a pgvector knowledge base
-7. **General Claude chat** — a sidebar "Chat with Claude" panel for quick ad-hoc questions directly to Claude Sonnet 4.6, bypassing the dual-agent flow
+7. **General Claude chat** — a sidebar "Chat with Claude" panel for any question (technology, business, finance, coding, strategy, and more), with autonomous Tavily web search for current information
 
 ---
 
@@ -213,7 +213,7 @@ You need **three** credentials. Set them as environment variables (`.env` locall
 |----------|----------|----------------|---------|
 | `ANTHROPIC_API_KEY` | YES | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Powers all Claude agents |
 | `DATABASE_URL` | YES | Railway PostgreSQL plugin (auto-injected) or your own PostgreSQL with pgvector | Vector KB + customer workspaces + conversations |
-| `TAVILY_API_KEY` | YES (Discovery Briefs) | [app.tavily.com](https://app.tavily.com) | Web search for discovery brief company research |
+| `TAVILY_API_KEY` | YES | [app.tavily.com](https://app.tavily.com) | Web search for Discovery Briefs and "Chat with Claude" (current events, company research, anything post-training) |
 
 > `DATABASE_URL` is **automatically injected** by the Railway PostgreSQL plugin. Do not add it manually to the API service.
 
@@ -468,7 +468,7 @@ python -m ingestion.ingest_pipeline --all --max-pages 20
 | SSE client | Browser `fetch` + `ReadableStream` — calls API directly via `NEXT_PUBLIC_API_URL` |
 | Vector store | PostgreSQL + pgvector (HNSW cosine similarity) |
 | Embeddings | `all-MiniLM-L6-v2` (sentence-transformers, 384-dim) |
-| Web search | Tavily API (discovery briefs) |
+| Web search | Tavily API (Discovery Briefs + Chat with Claude autonomous search) |
 | Web scraping | requests + BeautifulSoup4 + markdownify |
 | Doc parsing | pdfplumber (PDF), python-docx (Word) |
 | Deployment | Railway — API service (`Dockerfile.api` + `start.sh`) + Frontend service (`Dockerfile`) |

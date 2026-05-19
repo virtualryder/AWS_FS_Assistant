@@ -201,7 +201,10 @@ export default function GeneralChatModal({ onClose }: Props) {
           {isStreaming && (
             <div className="flex justify-start">
               <div className="chat-assistant max-w-[85%] px-4 py-3 space-y-2">
-                {!state.tokens && (
+                {state.status && (
+                  <StatusTicker message={state.status} visible />
+                )}
+                {!state.tokens && !state.status && (
                   <StatusTicker message="⏳  Claude is thinking…" visible />
                 )}
                 {state.tokens && <MarkdownRenderer content={state.tokens} />}
