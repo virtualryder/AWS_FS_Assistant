@@ -74,15 +74,21 @@ async def generate_discovery_brief(customer_id: str, body: DiscoveryRequest):
     async def event_generator():
         get_executor().submit(runner)
         brief_text = ""
+        total_wait = 0
+        max_wait = 360
 
         while True:
             try:
-                item = await asyncio.wait_for(queue.get(), timeout=300.0)
+                item = await asyncio.wait_for(queue.get(), timeout=4.0)
             except asyncio.TimeoutError:
-                yield {
-                    "data": json.dumps({"type": "error", "text": "Discovery brief timed out"})
-                }
-                return
+                total_wait += 4
+                if total_wait >= max_wait:
+                    yield {
+                        "data": json.dumps({"type": "error", "text": "Discovery brief timed out after 6 minutes"})
+                    }
+                    return
+                yield {"data": json.dumps({"type": "heartbeat", "text": ""})}
+                continue
 
             yield {"data": json.dumps(item)}
 

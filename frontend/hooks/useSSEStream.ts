@@ -86,7 +86,10 @@ export function useSSEStream() {
               continue;
             }
 
-            if (event.type === "status") {
+            if (event.type === "heartbeat") {
+              // Keep-alive event — ignore, exists only to prevent Railway proxy timeout
+              continue;
+            } else if (event.type === "status") {
               setState((s) => ({ ...s, status: event.text }));
             } else if (event.type === "token") {
               setState((s) => ({ ...s, tokens: s.tokens + event.text }));

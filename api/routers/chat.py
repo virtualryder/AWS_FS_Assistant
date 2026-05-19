@@ -138,15 +138,24 @@ async def chat(conv_id: str, body: ChatRequest):
         get_executor().submit(runner)
 
         full_response = ""
+        total_wait = 0
+        max_wait = 360  # 6-minute hard cap
 
         while True:
             try:
-                item = await asyncio.wait_for(queue.get(), timeout=300.0)
+                item = await asyncio.wait_for(queue.get(), timeout=4.0)
             except asyncio.TimeoutError:
-                yield {
-                    "data": json.dumps({"type": "error", "text": "Request timed out after 5 minutes"})
-                }
-                return
+                # Send a real SSE event so Railway's proxy doesn't cut the connection.
+                # The browser ignores "heartbeat" events — they exist purely to keep
+                # the TCP connection alive past Railway's ~30s idle timeout.
+                total_wait += 4
+                if total_wait >= max_wait:
+                    yield {
+                        "data": json.dumps({"type": "error", "text": "Request timed out after 6 minutes"})
+                    }
+                    return
+                yield {"data": json.dumps({"type": "heartbeat", "text": ""})}
+                continue
 
             yield {"data": json.dumps(item)}
 

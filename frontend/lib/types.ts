@@ -103,7 +103,7 @@ export interface KBSource {
 
 // ── SSE event types ───────────────────────────────────────────────────────────
 
-export type SSEEventType = "status" | "token" | "done" | "error";
+export type SSEEventType = "status" | "token" | "done" | "error" | "heartbeat";
 
 export interface SSEEvent {
   type: SSEEventType;
