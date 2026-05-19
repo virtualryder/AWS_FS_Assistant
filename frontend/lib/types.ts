@@ -90,6 +90,8 @@ export interface KnowledgeBaseStatus {
   all_seeds: SeedEntry[];
   indexed_services: number;
   total_services: number;
+  default_max_pages: number;
+  max_pages_limit: number;
 }
 
 export interface KBSource {

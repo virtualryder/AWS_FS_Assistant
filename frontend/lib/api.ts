@@ -195,6 +195,9 @@ export const kbApi = {
   sources: (): Promise<{ sources: KBSource[] }> =>
     apiFetch("/knowledge-base/sources"),
 
-  triggerIngest: (): Promise<{ status: string; message: string }> =>
-    apiFetch("/knowledge-base/ingest", { method: "POST" }),
+  triggerIngest: (maxPages?: number): Promise<{ status: string; message: string; max_pages: number }> =>
+    apiFetch("/knowledge-base/ingest", {
+      method: "POST",
+      body: JSON.stringify({ max_pages: maxPages ?? 75 }),
+    }),
 };

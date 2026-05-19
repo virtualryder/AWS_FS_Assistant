@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from pydantic import BaseModel
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import vectorstore.pg_client as db
@@ -188,6 +189,8 @@ async def get_status():
             "all_seeds": all_seeds,
             "indexed_services": indexed_count,
             "total_services": len(all_seeds),
+            "default_max_pages": DEFAULT_MAX_PAGES,
+            "max_pages_limit": MAX_PAGES_LIMIT,
         }
     except Exception as exc:
         logger.exception("Failed to get knowledge base status")
@@ -204,21 +207,40 @@ async def get_sources():
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+MAX_PAGES_LIMIT = 500
+DEFAULT_MAX_PAGES = 75
+
+_ingest_max_pages: int = DEFAULT_MAX_PAGES
+
+
+class IngestRequest(BaseModel):
+    max_pages: int = DEFAULT_MAX_PAGES
+
+
 @router.post("/ingest", status_code=202)
-async def trigger_ingest(background_tasks: BackgroundTasks):
+async def trigger_ingest(background_tasks: BackgroundTasks, body: IngestRequest = IngestRequest()):
     """
     Trigger an AWS documentation ingest run in the background.
     Returns immediately with 202 Accepted; poll /status for completion.
+
+    Body (optional JSON):
+        max_pages: int  — max pages to crawl per seed URL (default 75, max 500)
     """
-    global _ingest_running
+    global _ingest_running, _ingest_max_pages
     if _ingest_running:
         raise HTTPException(status_code=409, detail="An ingest run is already in progress")
 
-    background_tasks.add_task(_run_ingest)
-    return {"status": "started", "message": "Ingest run started in background"}
+    max_pages = max(1, min(body.max_pages, MAX_PAGES_LIMIT))
+    _ingest_max_pages = max_pages
+    background_tasks.add_task(_run_ingest, max_pages)
+    return {
+        "status": "started",
+        "message": f"Ingest started — up to {max_pages} pages per service.",
+        "max_pages": max_pages,
+    }
 
 
-def _run_ingest():
+def _run_ingest(max_pages: int = DEFAULT_MAX_PAGES):
     global _ingest_running, _ingest_progress
     _ingest_running = True
     _ingest_progress = {
@@ -234,13 +256,14 @@ def _run_ingest():
         "pages_this_run": 0,
         "chunks_this_run": 0,
         "services_completed": [],
+        "max_pages": max_pages,
     }
     try:
         from scraper.aws_doc_urls import PRIMARY_SEED_KEYS
         from ingestion.ingest_pipeline import run_ingestion
         run_ingestion(
             seed_keys=PRIMARY_SEED_KEYS,
-            max_pages_per_seed=20,
+            max_pages_per_seed=max_pages,
             save_to_disk=False,
             progress_callback=_progress_callback,
         )

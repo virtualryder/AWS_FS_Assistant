@@ -120,6 +120,7 @@ function ServiceTile({ seed, isCurrentlyIndexing }: { seed: SeedEntry; isCurrent
 export default function KnowledgeBasePanel({ status, onIngestTriggered }: Props) {
   const [triggering, setTriggering] = useState(false);
   const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
+  const [maxPages, setMaxPages] = useState<number>(status?.default_max_pages ?? 75);
 
   const isIndexing = status?.ingest_running ?? false;
   const chunkCount = status?.chunk_count ?? 0;
@@ -154,7 +155,7 @@ export default function KnowledgeBasePanel({ status, onIngestTriggered }: Props)
     setTriggering(true);
     setTriggerMsg(null);
     try {
-      const res = await kbApi.triggerIngest();
+      const res = await kbApi.triggerIngest(maxPages);
       setTriggerMsg(res.message ?? "Indexing started.");
       onIngestTriggered?.();
     } catch (err: unknown) {
@@ -177,17 +178,35 @@ export default function KnowledgeBasePanel({ status, onIngestTriggered }: Props)
             observability, cost optimization, and security built into every recommendation.
           </p>
         </div>
-        <button
-          onClick={handleTrigger}
-          disabled={triggering || isIndexing}
-          title={isIndexing ? "Indexing already in progress" : "Scrape and index all AWS documentation now"}
-          className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors
-            disabled:opacity-50 disabled:cursor-not-allowed
-            border-aws-orange text-aws-orange hover:bg-aws-orange hover:text-white
-            dark:border-aws-orange dark:text-aws-orange dark:hover:bg-aws-orange dark:hover:text-white"
-        >
-          {triggering ? "Starting…" : isIndexing ? "Indexing…" : "Run Indexer"}
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1">
+            <label className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              Max pages
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={status?.max_pages_limit ?? 500}
+              value={maxPages}
+              onChange={(e) => setMaxPages(Math.max(1, Math.min(status?.max_pages_limit ?? 500, parseInt(e.target.value) || 75)))}
+              disabled={isIndexing}
+              className="w-16 text-xs text-center border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1
+                bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                focus:outline-none focus:ring-1 focus:ring-aws-orange disabled:opacity-50"
+            />
+          </div>
+          <button
+            onClick={handleTrigger}
+            disabled={triggering || isIndexing}
+            title={isIndexing ? "Indexing already in progress" : `Scrape up to ${maxPages} pages per service`}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors
+              disabled:opacity-50 disabled:cursor-not-allowed
+              border-aws-orange text-aws-orange hover:bg-aws-orange hover:text-white
+              dark:border-aws-orange dark:text-aws-orange dark:hover:bg-aws-orange dark:hover:text-white"
+          >
+            {triggering ? "Starting…" : isIndexing ? "Indexing…" : "Run Indexer"}
+          </button>
+        </div>
       </div>
 
       {/* Trigger feedback */}
