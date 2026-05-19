@@ -6,6 +6,7 @@ import { COMPLIANCE_REFS, KB_CATALOG } from "@/lib/constants";
 import type { Customer } from "@/lib/types";
 import CustomerList from "@/components/customers/CustomerList";
 import { useTheme } from "@/lib/theme";
+import GeneralChatModal from "@/components/general/GeneralChatModal";
 
 interface Props {
   customers: Customer[];
@@ -16,10 +17,12 @@ interface Props {
 export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props) {
   const [complianceOpen, setComplianceOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
+  const [claudeChatOpen, setClaudeChatOpen] = useState(false);
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
 
   return (
+    <>
     <aside className="sidebar flex flex-col h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
@@ -48,6 +51,21 @@ export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props
           onCreated={onCustomerCreated}
           activePath={pathname}
         />
+      </div>
+
+      {/* Chat with Claude button */}
+      <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-800">
+        <button
+          onClick={() => setClaudeChatOpen(true)}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+            bg-gray-50 dark:bg-gray-800 hover:bg-aws-orange/10 dark:hover:bg-aws-orange/10
+            text-gray-700 dark:text-gray-300 hover:text-aws-orange dark:hover:text-aws-orange
+            border border-gray-200 dark:border-gray-700 hover:border-aws-orange/40
+            transition-colors"
+        >
+          <span className="text-base">✦</span>
+          <span>Chat with Claude</span>
+        </button>
       </div>
 
       {/* Knowledge Base reference */}
@@ -138,5 +156,10 @@ export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props
         )}
       </div>
     </aside>
+
+    {claudeChatOpen && (
+      <GeneralChatModal onClose={() => setClaudeChatOpen(false)} />
+    )}
+    </>
   );
 }

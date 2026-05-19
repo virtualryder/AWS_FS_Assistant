@@ -18,6 +18,7 @@ The assistant fields architecture and GenAI/ML questions from your account team 
 4. **Generates financial services discovery briefs** with regulatory risk profiling and targeted discovery questions, powered by live web research (Tavily)
 5. **Remembers conversation history** per customer, injecting prior session summaries into new conversations
 6. **Grounds every response** in real AWS documentation indexed in a pgvector knowledge base
+7. **General Claude chat** — a sidebar "Chat with Claude" panel for quick ad-hoc questions directly to Claude Sonnet 4.6, bypassing the dual-agent flow
 
 ---
 
@@ -142,7 +143,8 @@ AWS Financial Services Assistant/
 │       ├── chat.py                 # POST /api/conversations/{id}/chat (SSE, ping=20s)
 │       ├── documents.py            # Upload/toggle/delete customer documents
 │       ├── discovery.py            # POST /api/customers/{id}/discovery (SSE, ping=20s)
-│       └── knowledge_base.py       # KB status + sources + ingest trigger
+│       ├── knowledge_base.py       # KB status + sources + ingest trigger
+       └── general_chat.py         # POST /api/general-chat (direct Claude SSE, no agents)
 │
 ├── frontend/                       # Next.js 14 App Router frontend
 │   ├── package.json                # next@14.2.35 (CVE-patched)
@@ -151,7 +153,8 @@ AWS Financial Services Assistant/
 │   ├── tailwind.config.ts          # AWS orange + dark mode (class strategy)
 │   ├── railway.toml                # Railway config — frontend service (dockerfile)
 │   ├── app/
-│   │   ├── layout.tsx              # Root layout: ThemeProvider + DarkModeToggle
+│   │   ├── layout.tsx              # Root layout: ThemeProvider; dark by default (class=dark on <html>)
+│   │   ├── health/route.ts         # GET /health → 200 for Railway healthcheck
 │   │   ├── globals.css             # Tailwind base + custom dark mode styles
 │   │   ├── customers/page.tsx      # Welcome screen with KB panel
 │   │   ├── customers/[id]/page.tsx # Customer detail (Conversations/Discovery/Documents/KB tabs)
@@ -159,11 +162,12 @@ AWS Financial Services Assistant/
 │   ├── components/
 │   │   ├── chat/ChatWindow.tsx          # Streaming chat: connecting→status→tokens→done
 │   │   ├── discovery/DiscoveryPanel.tsx # Discovery brief generator with save confirmation
-│   │   ├── sidebar/Sidebar.tsx          # Customer list + 📚 KB catalog + ⚖️ compliance links
-│   │   ├── knowledge/KnowledgeBasePanel.tsx  # Full KB status with indexed sources
+│   │   ├── general/GeneralChatModal.tsx # Direct Claude chat modal (no agents, sidebar button)
+│   │   ├── sidebar/Sidebar.tsx          # Customer list + Chat with Claude + 📚 KB catalog + ⚖️ compliance links
+│   │   ├── knowledge/KnowledgeBasePanel.tsx  # Full KB status, indexed sources, Run Indexer button
 │   │   ├── customers/                   # CustomerHeader, CustomerList, DocumentsPanel, Modal
 │   │   ├── conversations/               # ConversationList
-│   │   └── common/                      # MarkdownRenderer, CopyButton, StatusTicker, DarkModeToggle
+│   │   └── common/                      # MarkdownRenderer, CopyButton, StatusTicker
 │   ├── hooks/
 │   │   ├── useSSEStream.ts         # POST → ReadableStream SSE; uses NEXT_PUBLIC_API_URL directly
 │   │   ├── useChatStream.ts        # Chat-specific wrapper
