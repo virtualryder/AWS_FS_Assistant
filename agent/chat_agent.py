@@ -15,6 +15,7 @@ a lightweight single-pass Claude call is used instead of invoking both agents.
 import logging
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -259,33 +260,49 @@ class FinServChatAgent:
             if status_callback:
                 status_callback(msg)
 
-        _emit("🏦  Starting Financial Services dual-agent analysis...")
+        _emit("🏦  Starting Financial Services dual-agent analysis (parallel)...")
+        _emit("─" * 55)
+        _emit("🏗️  AWS Architecture & Compliance Analysis — running in parallel with GenAI/ML")
+        _emit("🤖  GenAI & ML Opportunities Analysis — running in parallel with Architecture")
         _emit("─" * 55)
 
-        # ── Phase 1: AWS Architect Agent ──────────────────────────────────────
-        _emit("🏗️  Phase 1 of 2 — AWS Architecture & Compliance Analysis")
-        _emit("─" * 55)
+        arch_response = None
+        genai_response = None
+        errors = []
 
-        arch_response = self._aws_agent.analyze(
-            user_message=user_message,
-            customer_context=customer_context,
-            status_callback=status_callback,
-            text_stream_callback=None,  # No streaming during research phase
-        )
-        _emit("✅  AWS Architecture analysis complete.")
-        _emit("─" * 55)
+        def run_arch():
+            return self._aws_agent.analyze(
+                user_message=user_message,
+                customer_context=customer_context,
+                status_callback=status_callback,
+                text_stream_callback=None,
+            )
 
-        # ── Phase 2: GenAI/ML Agent ───────────────────────────────────────────
-        _emit("🤖  Phase 2 of 2 — GenAI & ML Opportunities Analysis")
-        _emit("─" * 55)
+        def run_genai():
+            return self._genai_agent.analyze(
+                user_message=user_message,
+                customer_context=customer_context,
+                status_callback=status_callback,
+                text_stream_callback=None,
+            )
 
-        genai_response = self._genai_agent.analyze(
-            user_message=user_message,
-            customer_context=customer_context,
-            status_callback=status_callback,
-            text_stream_callback=None,
-        )
-        _emit("✅  GenAI/ML analysis complete.")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            future_arch  = pool.submit(run_arch)
+            future_genai = pool.submit(run_genai)
+            for future in as_completed([future_arch, future_genai]):
+                exc = future.exception()
+                if exc:
+                    errors.append(str(exc))
+                elif future is future_arch:
+                    arch_response = future.result()
+                    _emit("✅  AWS Architecture analysis complete.")
+                else:
+                    genai_response = future.result()
+                    _emit("✅  GenAI/ML analysis complete.")
+
+        if errors:
+            raise RuntimeError(f"Agent(s) failed: {'; '.join(errors)}")
+
         _emit("─" * 55)
 
         # ── Phase 3: Synthesis ────────────────────────────────────────────────

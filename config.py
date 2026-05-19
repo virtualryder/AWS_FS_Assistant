@@ -14,7 +14,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 # Anthropic
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 MODEL_NAME = "claude-sonnet-4-6"
-MAX_TOKENS = 32000
+MAX_TOKENS = 16000   # sub-agent research phases; synthesis uses same budget
 
 # Tavily (web search for discovery briefs)
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
