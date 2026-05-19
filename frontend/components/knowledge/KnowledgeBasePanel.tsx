@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import type { KBSource, KnowledgeBaseStatus } from "@/lib/types";
 import { kbApi } from "@/lib/api";
 
 interface Props {
   status: KnowledgeBaseStatus | undefined;
+  onIngestTriggered?: () => void;
 }
 
 const TIER_LABELS: Record<number, { label: string; color: string }> = {
@@ -22,7 +24,6 @@ const PILLARS = [
   { icon: "🔒", label: "Security" },
 ];
 
-// Group sources by their tier
 function groupByTier(sources: KBSource[]): Record<number, KBSource[]> {
   const groups: Record<number, KBSource[]> = {};
   for (const s of sources) {
@@ -33,32 +34,69 @@ function groupByTier(sources: KBSource[]): Record<number, KBSource[]> {
   return groups;
 }
 
-export default function KnowledgeBasePanel({ status }: Props) {
-  const { data } = useSWR("kb-sources", kbApi.sources, {
+export default function KnowledgeBasePanel({ status, onIngestTriggered }: Props) {
+  const [triggering, setTriggering] = useState(false);
+  const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
+
+  const { data, mutate: mutateSources } = useSWR("kb-sources", kbApi.sources, {
     refreshInterval: 120_000,
   });
 
   const sources = data?.sources ?? [];
   const groups = groupByTier(sources);
-  const tiers = Object.keys(groups)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const tiers = Object.keys(groups).map(Number).sort((a, b) => a - b);
 
   const isIndexing = status?.ingest_running;
   const chunkCount = status?.chunk_count ?? 0;
 
+  async function handleTrigger() {
+    setTriggering(true);
+    setTriggerMsg(null);
+    try {
+      const res = await kbApi.triggerIngest();
+      setTriggerMsg(res.message ?? "Indexing started — check back in 15–20 minutes.");
+      onIngestTriggered?.();
+      // Refresh sources after a short delay
+      setTimeout(() => mutateSources(), 5000);
+    } catch (err: unknown) {
+      setTriggerMsg((err as Error).message ?? "Failed to start indexing.");
+    } finally {
+      setTriggering(false);
+    }
+  }
+
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-          AWS Knowledge Base
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Every response is grounded in current AWS documentation — architecture, scalability,
-          observability, cost optimization, and security built into every recommendation.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+            AWS Knowledge Base
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Every response is grounded in current AWS documentation — architecture, scalability,
+            observability, cost optimization, and security built into every recommendation.
+          </p>
+        </div>
+        <button
+          onClick={handleTrigger}
+          disabled={triggering || !!isIndexing}
+          title={isIndexing ? "Indexing already in progress" : "Scrape and index all AWS documentation now"}
+          className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors
+            disabled:opacity-50 disabled:cursor-not-allowed
+            border-aws-orange text-aws-orange hover:bg-aws-orange hover:text-white
+            dark:border-aws-orange dark:text-aws-orange dark:hover:bg-aws-orange dark:hover:text-white"
+        >
+          {triggering ? "Starting…" : isIndexing ? "Indexing…" : "Run Indexer"}
+        </button>
       </div>
+
+      {/* Trigger feedback */}
+      {triggerMsg && (
+        <div className="px-3 py-2 rounded-lg text-xs bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300">
+          {triggerMsg}
+        </div>
+      )}
 
       {/* Well-Architected pillars */}
       <div className="grid grid-cols-5 gap-2">
@@ -93,7 +131,7 @@ export default function KnowledgeBasePanel({ status }: Props) {
         </div>
         <div className="w-px h-8 bg-gray-200 dark:bg-gray-700" />
         <div className="text-center flex-1">
-          <div className={`text-xs font-semibold ${isIndexing ? "text-yellow-600 dark:text-yellow-400" : "text-green-600 dark:text-green-400"}`}>
+          <div className={`text-xs font-semibold ${isIndexing ? "text-yellow-600 dark:text-yellow-400" : chunkCount > 0 ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"}`}>
             {isIndexing ? "Indexing…" : chunkCount > 0 ? "Ready" : "Empty"}
           </div>
           <div className="text-[10px] text-gray-500 dark:text-gray-400">Status</div>
@@ -104,8 +142,8 @@ export default function KnowledgeBasePanel({ status }: Props) {
       {sources.length === 0 ? (
         <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-500">
           {isIndexing
-            ? "Indexing AWS documentation… check back in 15-20 minutes."
-            : "No sources indexed yet. The background indexer runs on first boot."}
+            ? "Indexing AWS documentation… check back in 15–20 minutes."
+            : "No sources indexed yet. Click \"Run Indexer\" above to start."}
         </div>
       ) : (
         <div className="space-y-4">
