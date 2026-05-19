@@ -64,12 +64,13 @@ async def trigger_ingest(background_tasks: BackgroundTasks):
     return {"status": "started", "message": "Ingest run started in background"}
 
 
-async def _run_ingest():
+def _run_ingest():
     global _ingest_running
     _ingest_running = True
     try:
-        from ingestion.ingest_pipeline import run_ingest
-        run_ingest()
+        from scraper.aws_doc_urls import PRIMARY_SEED_KEYS
+        from ingestion.ingest_pipeline import run_ingestion
+        run_ingestion(seed_keys=PRIMARY_SEED_KEYS, max_pages_per_seed=20, save_to_disk=False)
     except Exception:
         logger.exception("Ingest run failed")
     finally:
