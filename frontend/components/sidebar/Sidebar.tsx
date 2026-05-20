@@ -44,7 +44,7 @@ export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props
           >
             {theme === "dark" ? "☀️" : "🌙"}
           </button>
-          <UserButton afterSignOutUrl="/sign-in" />
+          <UserButton />
         </div>
       </div>
 
