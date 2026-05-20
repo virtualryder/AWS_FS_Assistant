@@ -45,12 +45,12 @@ export default function GeneralChatModal({ onClose }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const { state, stream, cancel, reset } = useSSEStream();
 
-  const isStreaming = !state.done && (state.connecting || state.tokens !== "");
+  const isStreaming = !state.done && (state.connecting || state.status !== "" || state.tokens !== "");
 
   // Scroll to bottom on new content
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, state.tokens]);
+  }, [messages, state.tokens, state.status]);
 
   // When streaming finishes, commit assistant message and persist
   useEffect(() => {
@@ -201,11 +201,18 @@ export default function GeneralChatModal({ onClose }: Props) {
           {isStreaming && (
             <div className="flex justify-start">
               <div className="chat-assistant max-w-[85%] px-4 py-3 space-y-2">
-                {state.status && (
-                  <StatusTicker message={state.status} visible />
-                )}
-                {!state.tokens && !state.status && (
-                  <StatusTicker message="⏳  Claude is thinking…" visible />
+                {/* Thinking dots — shown until first token arrives */}
+                {!state.tokens && (
+                  <div className="flex items-center gap-2">
+                    <span className="flex gap-1">
+                      <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce [animation-delay:0ms]" />
+                      <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce [animation-delay:150ms]" />
+                      <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce [animation-delay:300ms]" />
+                    </span>
+                    {state.status && (
+                      <StatusTicker message={state.status} visible />
+                    )}
+                  </div>
                 )}
                 {state.tokens && <MarkdownRenderer content={state.tokens} />}
               </div>
