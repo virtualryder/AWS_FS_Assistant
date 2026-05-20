@@ -55,14 +55,14 @@ export default function CustomerList({ customers, onCreated, activePath }: Props
                   href={`/customers/${c.id}`}
                   className={`flex flex-col px-4 py-2.5 text-sm transition-colors
                     ${isActive
-                      ? "bg-orange-50 border-r-2 border-aws-orange"
-                      : "hover:bg-gray-50"
+                      ? "bg-orange-50 dark:bg-orange-950/40 border-r-2 border-aws-orange"
+                      : "hover:bg-gray-200 dark:hover:bg-gray-800"
                     }`}
                 >
-                  <span className="font-medium text-gray-900 truncate">
+                  <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
                     {STAGE_EMOJI[c.stage]} {c.name}
                   </span>
-                  <span className="text-xs text-gray-400 mt-0.5 truncate">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                     {c.industry || c.stage}
                     {lastActive ? ` · ${timeAgo(lastActive)}` : ""}
                   </span>
