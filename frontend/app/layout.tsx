@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/lib/theme";
+import AuthTokenSync from "@/components/auth/AuthTokenSync";
 
 export const metadata: Metadata = {
   title: "AWS Financial Services Assistant",
@@ -19,6 +21,7 @@ export default function RootLayout({
     // className="dark" sets dark mode server-side so the first paint is always dark.
     // ThemeProvider's useEffect will switch to "light" if the user stored that preference.
     // suppressHydrationWarning silences React when the client overrides the class attribute.
+    <ClerkProvider>
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         {/* Blocking script runs synchronously before React hydration.
@@ -41,9 +44,11 @@ export default function RootLayout({
       </head>
       <body className="bg-gray-300 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
         <ThemeProvider>
+          <AuthTokenSync />
           {children}
         </ThemeProvider>
       </body>
     </html>
+    </ClerkProvider>
   );
 }

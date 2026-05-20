@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { SSEEvent, StreamState } from "@/lib/types";
 import { INITIAL_STREAM_STATE } from "@/lib/types";
+import { getApiTokenGetter } from "@/lib/api";
 
 /**
  * Generic SSE stream hook.
@@ -34,9 +35,16 @@ export function useSSEStream() {
       setState({ ...INITIAL_STREAM_STATE, connecting: true });
 
       try {
+        const authHeaders: Record<string, string> = {};
+        const tokenGetter = getApiTokenGetter();
+        if (tokenGetter) {
+          const token = await tokenGetter();
+          if (token) authHeaders.Authorization = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${SSE_BASE}${path}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+          headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...authHeaders },
           body: JSON.stringify(body),
           signal: controller.signal,
         });

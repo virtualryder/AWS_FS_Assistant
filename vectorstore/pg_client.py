@@ -328,9 +328,12 @@ def _init_customer_schema(conn: psycopg2.extensions.connection) -> None:
                 updated_at   TIMESTAMPTZ DEFAULT NOW()
             )
         """)
-        # Migrate: add stage column to existing customers tables
+        # Migrate: add stage + user_id columns to existing customers tables
         cur.execute("""
             ALTER TABLE customers ADD COLUMN IF NOT EXISTS stage TEXT DEFAULT 'Prospect'
+        """)
+        cur.execute("""
+            ALTER TABLE customers ADD COLUMN IF NOT EXISTS user_id TEXT DEFAULT ''
         """)
         cur.execute("""
             CREATE INDEX IF NOT EXISTS customers_name_idx
@@ -418,14 +421,21 @@ def _init_customer_schema(conn: psycopg2.extensions.connection) -> None:
 
 # ── Customer CRUD ─────────────────────────────────────────────────────────────
 
-def create_customer(name: str, industry: str = "", arch_context: str = "", stage: str = "Prospect") -> str:
+def create_customer(
+    name: str,
+    industry: str = "",
+    arch_context: str = "",
+    stage: str = "Prospect",
+    user_id: str = "",
+) -> str:
     customer_id = str(uuid.uuid4())
     conn = _get_conn()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO customers (id, name, industry, arch_context, stage) VALUES (%s, %s, %s, %s, %s)",
-                (customer_id, name.strip(), industry.strip(), arch_context.strip(), stage),
+                "INSERT INTO customers (id, name, industry, arch_context, stage, user_id) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (customer_id, name.strip(), industry.strip(), arch_context.strip(), stage, user_id),
             )
         conn.commit()
     except Exception:
@@ -434,7 +444,7 @@ def create_customer(name: str, industry: str = "", arch_context: str = "", stage
     return customer_id
 
 
-def get_customers() -> list[dict]:
+def get_customers(user_id: str = "") -> list[dict]:
     conn = _get_conn()
     with conn.cursor() as cur:
         cur.execute(
@@ -445,11 +455,13 @@ def get_customers() -> list[dict]:
                    (SELECT MAX(updated_at) FROM conversations
                     WHERE customer_id = c.id) AS last_active_at
             FROM customers c
+            WHERE (%s = '' OR c.user_id = %s)
             ORDER BY COALESCE(
                 (SELECT MAX(updated_at) FROM conversations WHERE customer_id = c.id),
                 c.created_at
             ) DESC
-            """
+            """,
+            (user_id, user_id),
         )
         rows = cur.fetchall()
     return [
@@ -459,15 +471,23 @@ def get_customers() -> list[dict]:
     ]
 
 
-def get_customer(customer_id: str) -> dict | None:
+def get_customer(customer_id: str, user_id: str | None = None) -> dict | None:
     conn = _get_conn()
     with conn.cursor() as cur:
-        cur.execute(
-            "SELECT id, name, industry, arch_context, "
-            "COALESCE(stage, 'Prospect') AS stage, created_at, updated_at "
-            "FROM customers WHERE id = %s",
-            (customer_id,),
-        )
+        if user_id is not None:
+            cur.execute(
+                "SELECT id, name, industry, arch_context, "
+                "COALESCE(stage, 'Prospect') AS stage, created_at, updated_at "
+                "FROM customers WHERE id = %s AND user_id = %s",
+                (customer_id, user_id),
+            )
+        else:
+            cur.execute(
+                "SELECT id, name, industry, arch_context, "
+                "COALESCE(stage, 'Prospect') AS stage, created_at, updated_at "
+                "FROM customers WHERE id = %s",
+                (customer_id,),
+            )
         row = cur.fetchone()
     if not row:
         return None

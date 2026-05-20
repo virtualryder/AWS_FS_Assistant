@@ -22,12 +22,13 @@ import logging
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import vectorstore.pg_client as db
+from api.auth import get_current_user_id
 from api.session_store import store as session_store
 from api.streaming import build_agent_runner, get_executor, make_callbacks
 
@@ -83,9 +84,11 @@ def _save_exchange(conv_id: str, user_prompt: str, assistant_response: str) -> N
 # ── Route ─────────────────────────────────────────────────────────────────────
 
 @router.post("/conversations/{conv_id}/chat")
-async def chat(conv_id: str, body: ChatRequest):
+async def chat(conv_id: str, body: ChatRequest, user_id: str = Depends(get_current_user_id)):
     conv = db.get_conversation(conv_id)
     if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if not db.get_customer(conv["customer_id"], user_id=user_id):
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     user_message = body.user_message.strip()

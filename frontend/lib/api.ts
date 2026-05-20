@@ -15,14 +15,35 @@ import type {
 
 const BASE = "/api";
 
+// ── Auth token ────────────────────────────────────────────────────────────────
+// Set by AuthTokenSync component once Clerk is ready.
+
+let _getToken: (() => Promise<string | null>) | null = null;
+
+export function setApiTokenGetter(getter: (() => Promise<string | null>) | null) {
+  _getToken = getter;
+}
+
+export function getApiTokenGetter() {
+  return _getToken;
+}
+
+async function _authHeaders(): Promise<Record<string, string>> {
+  if (!_getToken) return {};
+  const token = await _getToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
 // ── Generic fetch helper ──────────────────────────────────────────────────────
 
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const auth = await _authHeaders();
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options.headers },
+    headers: { "Content-Type": "application/json", ...auth, ...options.headers },
     ...options,
   });
   if (!res.ok) {
@@ -106,10 +127,11 @@ export const documentsApi = {
   ): Promise<CustomerDocument> => {
     const form = new FormData();
     form.append("file", file);
+    const auth = await _authHeaders();
     const res = await fetch(`${BASE}/customers/${customerId}/documents`, {
       method: "POST",
+      headers: { ...auth },  // Don't set Content-Type — browser sets it with the boundary
       body: form,
-      // Don't set Content-Type — browser sets it with the boundary
     });
     if (!res.ok) {
       let detail = res.statusText;
@@ -170,8 +192,10 @@ export const projectsApi = {
   uploadDocument: async (projectId: string, file: File): Promise<CustomerDocument> => {
     const form = new FormData();
     form.append("file", file);
+    const auth = await _authHeaders();
     const res = await fetch(`${BASE}/projects/${projectId}/documents`, {
       method: "POST",
+      headers: { ...auth },
       body: form,
     });
     if (!res.ok) {

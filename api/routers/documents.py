@@ -12,11 +12,12 @@ import logging
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import vectorstore.pg_client as db
+from api.auth import get_current_user_id
 from ingestion.document_parser import extract_text
 
 logger = logging.getLogger(__name__)
@@ -36,8 +37,8 @@ class DocumentToggle(BaseModel):
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.get("/customers/{customer_id}/documents")
-async def list_documents(customer_id: str):
-    if not db.get_customer(customer_id):
+async def list_documents(customer_id: str, user_id: str = Depends(get_current_user_id)):
+    if not db.get_customer(customer_id, user_id=user_id):
         raise HTTPException(status_code=404, detail="Customer not found")
     docs = db.get_customer_documents(customer_id)
     return [_serialize(d) for d in docs]
@@ -47,8 +48,9 @@ async def list_documents(customer_id: str):
 async def upload_document(
     customer_id: str,
     file: UploadFile = File(...),
+    user_id: str = Depends(get_current_user_id),
 ):
-    if not db.get_customer(customer_id):
+    if not db.get_customer(customer_id, user_id=user_id):
         raise HTTPException(status_code=404, detail="Customer not found")
 
     suffix = Path(file.filename or "").suffix.lower()

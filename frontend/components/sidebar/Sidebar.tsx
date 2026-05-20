@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { UserButton } from "@clerk/nextjs";
 import { COMPLIANCE_REFS, KB_CATALOG } from "@/lib/constants";
 import type { Customer } from "@/lib/types";
 import CustomerList from "@/components/customers/CustomerList";
@@ -35,13 +36,16 @@ export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props
             <div className="text-xs text-gray-500 dark:text-gray-400">Financial Services Assistant</div>
           </div>
         </div>
-        <button
-          onClick={toggle}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded transition-colors"
-        >
-          {theme === "dark" ? "☀️" : "🌙"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggle}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded transition-colors"
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+          <UserButton afterSignOutUrl="/sign-in" />
+        </div>
       </div>
 
       {/* Customer list */}

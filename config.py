@@ -19,6 +19,11 @@ MAX_TOKENS = 16000   # sub-agent research phases; synthesis uses same budget
 # Tavily (web search for discovery briefs)
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
+# Clerk authentication
+# CLERK_JWKS_URL: from your Clerk dashboard → API Keys → Advanced → JWKS URL
+# e.g. https://your-instance.clerk.accounts.dev/.well-known/jwks.json
+CLERK_JWKS_URL = os.getenv("CLERK_JWKS_URL", "")
+
 # ChromaDB collection name (legacy — pgvector is primary)
 COLLECTION_NAME = "aws_finserv_docs"
 

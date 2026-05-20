@@ -22,12 +22,13 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import vectorstore.pg_client as db
+from api.auth import get_current_user_id
 from api.streaming import build_discovery_runner, get_executor
 
 logger = logging.getLogger(__name__)
@@ -46,8 +47,12 @@ class DiscoveryRequest(BaseModel):
 # ── Route ─────────────────────────────────────────────────────────────────────
 
 @router.post("/customers/{customer_id}/discovery")
-async def generate_discovery_brief(customer_id: str, body: DiscoveryRequest):
-    customer = db.get_customer(customer_id)
+async def generate_discovery_brief(
+    customer_id: str,
+    body: DiscoveryRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    customer = db.get_customer(customer_id, user_id=user_id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
