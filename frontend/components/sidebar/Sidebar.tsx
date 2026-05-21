@@ -31,9 +31,9 @@ export default function Sidebar({ customers, onCustomerCreated, kbCount }: Props
           <span className="text-xl">🏦</span>
           <div>
             <div className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
-              AWS Financial Services
+              AWS FinServ Assistant
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Financial Services Assistant</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Compliance-Validated Architecture</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
